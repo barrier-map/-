@@ -1,0 +1,337 @@
+/* ===========================
+   StudyRoom
+=========================== */
+
+.studyroom{
+    margin-left:250px;
+    min-height:100vh;
+    padding:40px;
+    background:#f7f7fc;
+}
+
+/* Header */
+
+.studyroom-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-bottom:35px;
+
+}
+
+.studyroom-header h1{
+
+    font-size:36px;
+    color:#222;
+    margin-bottom:8px;
+
+}
+
+.studyroom-header p{
+
+    color:#777;
+
+}
+
+/* Create Button */
+
+.create-btn{
+
+    background:#6d5dfc;
+
+    color:white;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:14px 22px;
+
+    font-size:15px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.create-btn:hover{
+
+    transform:translateY(-2px);
+
+    background:#5948ff;
+
+}
+
+/* Room List */
+
+.room-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:20px;
+
+}
+
+/* Room Card */
+
+.room-card{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.05);
+
+    transition:.25s;
+
+}
+
+.room-card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+.room-info h2{
+
+    margin-bottom:12px;
+
+    color:#333;
+
+}
+
+.room-info p{
+
+    color:#666;
+
+    margin:5px 0;
+
+}
+
+/* Join Button */
+
+.join-btn{
+
+    background:#6d5dfc;
+
+    color:white;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:12px 25px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.join-btn:hover{
+
+    background:#5948ff;
+
+}
+
+/* Empty */
+
+.empty-room{
+
+    background:white;
+
+    padding:60px;
+
+    border-radius:18px;
+
+    text-align:center;
+
+    color:#888;
+
+    font-size:18px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.05);
+
+}
+
+/* ===========================
+   Modal
+=========================== */
+
+.modal-bg{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.45);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:999;
+
+}
+
+.modal{
+
+    width:430px;
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    animation:popup .25s;
+
+}
+
+@keyframes popup{
+
+    from{
+
+        transform:scale(.9);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+.modal h2{
+
+    margin-bottom:20px;
+
+}
+
+.modal input,
+.modal select{
+
+    width:100%;
+
+    padding:14px;
+
+    margin-bottom:15px;
+
+    border:1px solid #ddd;
+
+    border-radius:10px;
+
+    font-size:15px;
+
+    outline:none;
+
+}
+
+.modal input:focus,
+.modal select:focus{
+
+    border-color:#6d5dfc;
+
+}
+
+.modal-buttons{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:10px;
+
+    margin-top:10px;
+
+}
+
+.cancel-btn{
+
+    padding:12px 20px;
+
+    background:#ddd;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+}
+
+.cancel-btn:hover{
+
+    background:#cfcfcf;
+
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media(max-width:900px){
+
+.studyroom{
+
+    margin-left:0;
+
+    padding:20px;
+
+}
+
+.studyroom-header{
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:20px;
+
+}
+
+.room-card{
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:20px;
+
+}
+
+.join-btn,
+.create-btn{
+
+    width:100%;
+
+}
+
+.modal{
+
+    width:90%;
+
+}
+
+}

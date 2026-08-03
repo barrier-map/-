@@ -1,0 +1,113 @@
+.room-page{
+
+    margin-left:250px;
+
+    min-height:100vh;
+
+    background:#f7f7fc;
+
+    padding:30px;
+
+}
+
+.room-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:30px;
+
+}
+
+.leave-btn{
+
+    background:#ef4444;
+
+    color:white;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:12px 20px;
+
+    cursor:pointer;
+
+}
+
+.room-body{
+
+    display:grid;
+
+    grid-template-columns:3fr 1fr;
+
+    gap:20px;
+
+}
+
+.video-area{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:20px;
+
+}
+
+.video-card{
+
+    background:#222;
+
+    color:white;
+
+    height:260px;
+
+    border-radius:18px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:22px;
+
+}
+
+.chat-area{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:20px;
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+.chat-list{
+
+    flex:1;
+
+    margin:20px 0;
+
+    overflow:auto;
+
+}
+
+.chat-area input{
+
+    padding:14px;
+
+    border-radius:10px;
+
+    border:1px solid #ddd;
+
+}

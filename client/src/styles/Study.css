@@ -1,0 +1,182 @@
+.study-page {
+  margin-left: 250px;
+  min-height: 100vh;
+  background: #f7f7fc;
+  padding: 30px;
+}
+
+.study-header {
+  margin-bottom: 30px;
+}
+
+.study-header h1 {
+  margin: 0 0 8px 0;
+}
+
+.study-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.study-box {
+  background: white;
+  border-radius: 18px;
+  padding: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.study-box h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+/* 포모도로 */
+.pomodoro-box {
+  text-align: center;
+}
+
+.pomodoro-mode {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.pomodoro-mode.work {
+  background: #ecebff;
+  color: #6d5dfc;
+}
+
+.pomodoro-mode.break {
+  background: #e7f9ee;
+  color: #22c55e;
+}
+
+.pomodoro-time {
+  font-size: 56px;
+  font-weight: bold;
+  color: #333;
+  margin: 10px 0 20px 0;
+}
+
+.pomodoro-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.pomodoro-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  background: #6d5dfc;
+  color: white;
+}
+
+.pomodoro-buttons button.secondary {
+  background: #eee;
+  color: #333;
+}
+
+.pomodoro-count {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 메모 */
+.memo-box textarea {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.memo-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #999;
+}
+
+/* 목표 체크리스트 */
+.goal-box {
+  grid-column: span 2;
+}
+
+.goal-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.goal-input-row input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+}
+
+.goal-input-row button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #6d5dfc;
+  color: white;
+  cursor: pointer;
+}
+
+.goal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border-radius: 12px;
+  background: #f7f7fc;
+}
+
+.goal-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.goal-item span {
+  flex: 1;
+  font-size: 15px;
+}
+
+.goal-item.done span {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.goal-item button {
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.goal-empty {
+  color: #999;
+  text-align: center;
+  padding: 20px 0;
+}

@@ -1,0 +1,308 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #f8f6ff;
+  font-family: "Pretendard", sans-serif;
+  color: #333;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =========================
+   Sidebar
+========================= */
+
+.sidebar {
+  width: 260px;
+  background: white;
+  border-right: 1px solid #ececec;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo h1 {
+  color: #6c4dff;
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+
+.logo p {
+  color: #888;
+  margin-bottom: 40px;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  padding: 14px 18px;
+
+  border-radius: 14px;
+
+  cursor: pointer;
+
+  transition: .25s;
+}
+
+.menu:hover {
+  background: #ede9fe;
+  color: #6c4dff;
+}
+
+/* =========================
+   Main
+========================= */
+
+.main {
+  flex: 1;
+  padding: 45px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar h2 {
+  font-size: 34px;
+}
+
+.topbar p {
+  margin-top: 8px;
+  color: #777;
+}
+
+.studyBtn {
+  background: #6c4dff;
+  color: white;
+
+  border: none;
+
+  padding: 15px 28px;
+
+  border-radius: 14px;
+
+  cursor: pointer;
+
+  font-size: 16px;
+
+  transition: .25s;
+}
+
+.studyBtn:hover {
+  transform: translateY(-3px);
+
+  box-shadow: 0 15px 30px rgba(108,77,255,.25);
+}
+
+/* =========================
+   Cards
+========================= */
+
+.cards {
+
+  margin-top: 45px;
+
+  display: grid;
+
+  grid-template-columns: repeat(2,1fr);
+
+  gap: 25px;
+
+}
+
+.card {
+
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 30px;
+
+  box-shadow: 0 12px 30px rgba(0,0,0,.05);
+
+}
+
+.cardIcon{
+
+  font-size:40px;
+
+  margin-bottom:15px;
+
+}
+
+.card h3{
+
+  color:#666;
+
+  margin-bottom:10px;
+
+}
+
+.card h2{
+
+  font-size:34px;
+
+}
+
+/* =========================
+   Recent
+========================= */
+
+.recent{
+
+  margin-top:50px;
+
+}
+
+.recent h2{
+
+  margin-bottom:20px;
+
+}
+
+.recentCard{
+
+  background:white;
+
+  padding:35px;
+
+  border-radius:20px;
+
+  box-shadow:0 12px 30px rgba(0,0,0,.05);
+
+  color:#777;
+
+}.active{
+    background:#ede9fe;
+    color:#6c4dff;
+    font-weight:600;
+}
+
+.topRight{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.search{
+
+    border:none;
+
+    background:white;
+
+    padding:13px 18px;
+
+    border-radius:14px;
+
+    width:220px;
+
+    outline:none;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.05);
+
+}
+
+.iconBtn{
+
+    width:46px;
+
+    height:46px;
+
+    border:none;
+
+    background:white;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    font-size:18px;
+
+    transition:.25s;
+
+}
+
+.iconBtn:hover{
+
+    background:#ede9fe;
+
+}
+
+.profile{
+
+    width:46px;
+
+    height:46px;
+
+    border-radius:50%;
+
+    background:#6c4dff;
+
+    color:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-weight:bold;
+
+}
+
+.card{
+
+    transition:.3s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 18px 40px rgba(0,0,0,.1);
+
+}
+
+.progress{
+
+    width:100%;
+
+    height:8px;
+
+    background:#ececec;
+
+    border-radius:20px;
+
+    margin-top:18px;
+
+    overflow:hidden;
+
+}
+
+.progressBar{
+
+    width:0%;
+
+    height:100%;
+
+    background:#6c4dff;
+
+}
