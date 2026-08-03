@@ -38,51 +38,47 @@ app.use("/api/study", studyRouter);
 // ==========================
 // DB 생성
 // ==========================
-db.serialize(() => {
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    email TEXT UNIQUE,
+    password TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      email TEXT UNIQUE,
-      password TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+db.exec(`
+  CREATE TABLE IF NOT EXISTS rooms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    password TEXT,
+    owner_id INTEGER,
+    max_users INTEGER DEFAULT 12,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS rooms (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      password TEXT,
-      owner_id INTEGER,
-      max_users INTEGER DEFAULT 12,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+// 사용자 1명당 메모 1개 (자동저장이라 계속 덮어씀)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS study_memos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL,
+    content TEXT DEFAULT '',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-  // 사용자 1명당 메모 1개 (자동저장이라 계속 덮어씀)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS study_memos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER UNIQUE NOT NULL,
-      content TEXT DEFAULT '',
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  // 목표 체크리스트 (여러 개 가능)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS study_goals (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      content TEXT NOT NULL,
-      done INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-});
+// 목표 체크리스트 (여러 개 가능)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS study_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    done INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
 // ==========================
 // 기본 페이지

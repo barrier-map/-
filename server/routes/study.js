@@ -13,25 +13,23 @@ router.get("/memo/:userId", (req, res) => {
 
     const { userId } = req.params;
 
-    db.get(
-        "SELECT content FROM study_memos WHERE user_id=?",
-        [userId],
-        (err, row) => {
+    try {
+        const row = db
+            .prepare("SELECT content FROM study_memos WHERE user_id=?")
+            .get(userId);
 
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: "DB 오류"
-                });
-            }
+        res.json({
+            success: true,
+            content: row ? row.content : ""
+        });
 
-            res.json({
-                success: true,
-                content: row ? row.content : ""
-            });
-
-        }
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "DB 오류"
+        });
+    }
 
 });
 
@@ -52,31 +50,25 @@ router.post("/memo", (req, res) => {
         });
     }
 
-    db.run(
-        `
-        INSERT INTO study_memos (user_id, content, updated_at)
-        VALUES (?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(user_id)
-        DO UPDATE SET content=excluded.content, updated_at=CURRENT_TIMESTAMP
-        `,
-        [userId, content || ""],
-        (err) => {
+    try {
+        db.prepare(
+            `
+            INSERT INTO study_memos (user_id, content, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id)
+            DO UPDATE SET content=excluded.content, updated_at=CURRENT_TIMESTAMP
+            `
+        ).run(userId, content || "");
 
-            if (err) {
-                console.log(err);
+        res.json({ success: true });
 
-                return res.json({
-                    success: false,
-                    message: "메모 저장 실패"
-                });
-            }
-
-            res.json({
-                success: true
-            });
-
-        }
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "메모 저장 실패"
+        });
+    }
 
 });
 
@@ -90,25 +82,23 @@ router.get("/goals/:userId", (req, res) => {
 
     const { userId } = req.params;
 
-    db.all(
-        "SELECT * FROM study_goals WHERE user_id=? ORDER BY id DESC",
-        [userId],
-        (err, rows) => {
+    try {
+        const rows = db
+            .prepare("SELECT * FROM study_goals WHERE user_id=? ORDER BY id DESC")
+            .all(userId);
 
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: "DB 오류"
-                });
-            }
+        res.json({
+            success: true,
+            goals: rows
+        });
 
-            res.json({
-                success: true,
-                goals: rows
-            });
-
-        }
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "DB 오류"
+        });
+    }
 
 });
 
@@ -129,30 +119,28 @@ router.post("/goals", (req, res) => {
         });
     }
 
-    db.run(
-        "INSERT INTO study_goals (user_id, content) VALUES (?, ?)",
-        [userId, content],
-        function (err) {
+    try {
+        const result = db
+            .prepare("INSERT INTO study_goals (user_id, content) VALUES (?, ?)")
+            .run(userId, content);
 
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: "목표 추가 실패"
-                });
+        res.json({
+            success: true,
+            goal: {
+                id: result.lastInsertRowid,
+                user_id: userId,
+                content,
+                done: 0
             }
+        });
 
-            res.json({
-                success: true,
-                goal: {
-                    id: this.lastID,
-                    user_id: userId,
-                    content,
-                    done: 0
-                }
-            });
-
-        }
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "목표 추가 실패"
+        });
+    }
 
 });
 
@@ -167,22 +155,19 @@ router.put("/goals/:id", (req, res) => {
     const { id } = req.params;
     const { done } = req.body;
 
-    db.run(
-        "UPDATE study_goals SET done=? WHERE id=?",
-        [done ? 1 : 0, id],
-        (err) => {
+    try {
+        db.prepare("UPDATE study_goals SET done=? WHERE id=?")
+            .run(done ? 1 : 0, id);
 
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: "목표 수정 실패"
-                });
-            }
+        res.json({ success: true });
 
-            res.json({ success: true });
-
-        }
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "목표 수정 실패"
+        });
+    }
 
 });
 
@@ -196,22 +181,18 @@ router.delete("/goals/:id", (req, res) => {
 
     const { id } = req.params;
 
-    db.run(
-        "DELETE FROM study_goals WHERE id=?",
-        [id],
-        (err) => {
+    try {
+        db.prepare("DELETE FROM study_goals WHERE id=?").run(id);
 
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: "목표 삭제 실패"
-                });
-            }
+        res.json({ success: true });
 
-            res.json({ success: true });
-
-        }
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "목표 삭제 실패"
+        });
+    }
 
 });
 

@@ -1,5 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const db = require("../database/database");
@@ -25,50 +25,37 @@ router.post("/register", async (req, res) => {
         });
     }
 
-    db.get(
-        "SELECT * FROM users WHERE email = ?",
-        [email],
-        async (err, user) => {
+    try {
+        const existingUser = db
+            .prepare("SELECT * FROM users WHERE email = ?")
+            .get(email);
 
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: "DB 오류"
-                });
-            }
-
-            if (user) {
-                return res.json({
-                    success: false,
-                    message: "이미 가입된 이메일입니다."
-                });
-            }
-
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            db.run(
-                `INSERT INTO users(username,email,password)
-                 VALUES(?,?,?)`,
-                [username, email, hashedPassword],
-                function (err) {
-
-                    if (err) {
-                        return res.json({
-                            success: false,
-                            message: "회원가입 실패"
-                        });
-                    }
-
-                    res.json({
-                        success: true,
-                        message: "회원가입 완료"
-                    });
-
-                }
-            );
-
+        if (existingUser) {
+            return res.json({
+                success: false,
+                message: "이미 가입된 이메일입니다."
+            });
         }
-    );
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        db.prepare(
+            `INSERT INTO users(username,email,password)
+             VALUES(?,?,?)`
+        ).run(username, email, hashedPassword);
+
+        res.json({
+            success: true,
+            message: "회원가입 완료"
+        });
+
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "회원가입 실패"
+        });
+    }
 
 });
 
@@ -77,62 +64,60 @@ router.post("/register", async (req, res) => {
 // 로그인
 // POST /api/auth/login
 // ===========================
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
 
     const { email, password } = req.body;
 
-    db.get(
-        "SELECT * FROM users WHERE email = ?",
-        [email],
-        async (err, user) => {
+    try {
+        const user = db
+            .prepare("SELECT * FROM users WHERE email = ?")
+            .get(email);
 
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: "DB 오류"
-                });
-            }
-
-            if (!user) {
-                return res.json({
-                    success: false,
-                    message: "이메일이 존재하지 않습니다."
-                });
-            }
-
-            const match = await bcrypt.compare(password, user.password);
-
-            if (!match) {
-                return res.json({
-                    success: false,
-                    message: "비밀번호가 틀렸습니다."
-                });
-            }
-
-            const token = jwt.sign(
-                {
-                    id: user.id,
-                    email: user.email
-                },
-                SECRET_KEY,
-                {
-                    expiresIn: "7d"
-                }
-            );
-
-            res.json({
-                success: true,
-                message: "로그인 성공",
-                token,
-                user: {
-                    id: user.id,
-                    username: user.username,
-                    email: user.email
-                }
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "이메일이 존재하지 않습니다."
             });
-
         }
-    );
+
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+            return res.json({
+                success: false,
+                message: "비밀번호가 틀렸습니다."
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                id: user.id,
+                email: user.email
+            },
+            SECRET_KEY,
+            {
+                expiresIn: "7d"
+            }
+        );
+
+        res.json({
+            success: true,
+            message: "로그인 성공",
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email
+            }
+        });
+
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "DB 오류"
+        });
+    }
 
 });
 

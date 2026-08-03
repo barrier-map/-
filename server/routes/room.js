@@ -17,39 +17,32 @@ router.post("/create", (req, res) => {
         max_users
     } = req.body;
 
-    db.run(
-        `
-        INSERT INTO rooms
-        (title,password,owner_id,max_users)
-        VALUES(?,?,?,?)
-        `,
-        [
+    try {
+        const result = db.prepare(
+            `
+            INSERT INTO rooms
+            (title,password,owner_id,max_users)
+            VALUES(?,?,?,?)
+            `
+        ).run(
             title,
             password || "",
             owner_id || 0,
             max_users || 12
-        ],
-        function (err) {
+        );
 
-            if (err) {
+        res.json({
+            success: true,
+            roomId: result.lastInsertRowid
+        });
 
-                console.log(err);
-
-                return res.json({
-                    success: false,
-                    message: "방 생성 실패"
-                });
-
-            }
-
-            res.json({
-                success: true,
-                roomId: this.lastID
-            });
-
-        }
-
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "방 생성 실패"
+        });
+    }
 
 });
 
@@ -60,39 +53,32 @@ router.post("/create", (req, res) => {
 
 router.get("/", (req, res) => {
 
-    db.all(
-        `
-        SELECT
-            id,
-            title,
-            max_users,
-            created_at,
-            CASE
-                WHEN password IS NULL OR password=''
-                THEN 0
-                ELSE 1
-            END AS hasPassword
-        FROM rooms
-        ORDER BY id DESC
-        `,
-        [],
-        (err, rows) => {
+    try {
+        const rows = db.prepare(
+            `
+            SELECT
+                id,
+                title,
+                max_users,
+                created_at,
+                CASE
+                    WHEN password IS NULL OR password=''
+                    THEN 0
+                    ELSE 1
+                END AS hasPassword
+            FROM rooms
+            ORDER BY id DESC
+            `
+        ).all();
 
-            if (err) {
+        res.json(rows);
 
-                console.log(err);
-
-                return res.json({
-                    success: false
-                });
-
-            }
-
-            res.json(rows);
-
-        }
-
-    );
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false
+        });
+    }
 
 });
 
@@ -108,57 +94,43 @@ router.post("/join", (req, res) => {
         password
     } = req.body;
 
-    db.get(
+    try {
+        const room = db
+            .prepare("SELECT * FROM rooms WHERE id=?")
+            .get(roomId);
 
-        "SELECT * FROM rooms WHERE id=?",
-
-        [roomId],
-
-        (err, room) => {
-
-            if (err) {
-
-                return res.json({
-                    success: false,
-                    message: "DB 오류"
-                });
-
-            }
-
-            if (!room) {
-
-                return res.json({
-                    success: false,
-                    message: "방이 존재하지 않습니다."
-                });
-
-            }
-
-            if (room.password && room.password !== "") {
-
-                if (room.password !== password) {
-
-                    return res.json({
-                        success: false,
-                        message: "비밀번호가 올바르지 않습니다."
-                    });
-
-                }
-
-            }
-
-            res.json({
-                success: true,
-                room: {
-                    id: room.id,
-                    title: room.title,
-                    max_users: room.max_users
-                }
+        if (!room) {
+            return res.json({
+                success: false,
+                message: "방이 존재하지 않습니다."
             });
-
         }
 
-    );
+        if (room.password && room.password !== "") {
+            if (room.password !== password) {
+                return res.json({
+                    success: false,
+                    message: "비밀번호가 올바르지 않습니다."
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            room: {
+                id: room.id,
+                title: room.title,
+                max_users: room.max_users
+            }
+        });
+
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "DB 오류"
+        });
+    }
 
 });
 
