@@ -26,11 +26,12 @@ router.post("/register", async (req, res) => {
     }
 
     try {
-        const existingUser = db
-            .prepare("SELECT * FROM users WHERE email = ?")
-            .get(email);
+        const existing = await db.execute({
+            sql: "SELECT id FROM users WHERE email = ?",
+            args: [email],
+        });
 
-        if (existingUser) {
+        if (existing.rows.length > 0) {
             return res.json({
                 success: false,
                 message: "이미 가입된 이메일입니다."
@@ -39,10 +40,11 @@ router.post("/register", async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        db.prepare(
-            `INSERT INTO users(username,email,password)
-             VALUES(?,?,?)`
-        ).run(username, email, hashedPassword);
+        await db.execute({
+            sql: `INSERT INTO users(username,email,password)
+                  VALUES(?,?,?)`,
+            args: [username, email, hashedPassword],
+        });
 
         res.json({
             success: true,
@@ -69,9 +71,12 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = db
-            .prepare("SELECT * FROM users WHERE email = ?")
-            .get(email);
+        const result = await db.execute({
+            sql: "SELECT * FROM users WHERE email = ?",
+            args: [email],
+        });
+
+        const user = result.rows[0];
 
         if (!user) {
             return res.json({

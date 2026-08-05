@@ -36,49 +36,53 @@ app.use("/api/rooms", roomRouter);
 app.use("/api/study", studyRouter);
 
 // ==========================
-// DB 생성
+// DB 생성 (Turso는 비동기 방식이라 async 함수로 감싸서 실행)
 // ==========================
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL,
-    email TEXT UNIQUE,
-    password TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+async function initTables() {
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS rooms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    password TEXT,
-    owner_id INTEGER,
-    max_users INTEGER DEFAULT 12,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL,
+      email TEXT UNIQUE,
+      password TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-// 사용자 1명당 메모 1개 (자동저장이라 계속 덮어씀)
-db.exec(`
-  CREATE TABLE IF NOT EXISTS study_memos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER UNIQUE NOT NULL,
-    content TEXT DEFAULT '',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS rooms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      password TEXT,
+      owner_id INTEGER,
+      max_users INTEGER DEFAULT 12,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-// 목표 체크리스트 (여러 개 가능)
-db.exec(`
-  CREATE TABLE IF NOT EXISTS study_goals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    content TEXT NOT NULL,
-    done INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+  // 사용자 1명당 메모 1개 (자동저장이라 계속 덮어씀)
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS study_memos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER UNIQUE NOT NULL,
+      content TEXT DEFAULT '',
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 목표 체크리스트 (여러 개 가능)
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS study_goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      done INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+}
 
 // ==========================
 // 기본 페이지
@@ -201,17 +205,24 @@ io.on("connection", (socket) => {
 });
 
 // ==========================
-// 실행
+// 실행 (DB 테이블 준비가 끝난 뒤에 서버를 켬)
 // ==========================
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
+initTables()
+  .then(() => {
+    server.listen(PORT, () => {
 
-  console.log("=======================================");
-  console.log("🏠 DarakBang Server Started");
-  console.log(`🚀 http://localhost:${PORT}`);
-  console.log("💬 Socket.IO Ready");
-  console.log("=======================================");
+      console.log("=======================================");
+      console.log("🏠 DarakBang Server Started");
+      console.log(`🚀 http://localhost:${PORT}`);
+      console.log("💬 Socket.IO Ready");
+      console.log("=======================================");
 
-});
+    });
+  })
+  .catch((err) => {
+    console.error("❌ 데이터베이스 연결/초기화 실패:", err);
+    console.error("TURSO_DATABASE_URL / TURSO_AUTH_TOKEN 환경변수를 확인해주세요.");
+  });

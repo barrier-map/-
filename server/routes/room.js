@@ -8,7 +8,7 @@ const router = express.Router();
 // 방 생성
 // ======================
 
-router.post("/create", (req, res) => {
+router.post("/create", async (req, res) => {
 
     const {
         title,
@@ -26,33 +26,35 @@ router.post("/create", (req, res) => {
 
     try {
         // 방 이름 중복 체크
-        const existing = db
-            .prepare("SELECT id FROM rooms WHERE title = ?")
-            .get(title.trim());
+        const existing = await db.execute({
+            sql: "SELECT id FROM rooms WHERE title = ?",
+            args: [title.trim()],
+        });
 
-        if (existing) {
+        if (existing.rows.length > 0) {
             return res.json({
                 success: false,
                 message: "이미 사용 중인 방 이름입니다."
             });
         }
 
-        const result = db.prepare(
-            `
+        const result = await db.execute({
+            sql: `
             INSERT INTO rooms
             (title,password,owner_id,max_users)
             VALUES(?,?,?,?)
-            `
-        ).run(
-            title.trim(),
-            password || "",
-            owner_id || 0,
-            max_users || 12
-        );
+            `,
+            args: [
+                title.trim(),
+                password || "",
+                owner_id || 0,
+                max_users || 12,
+            ],
+        });
 
         res.json({
             success: true,
-            roomId: result.lastInsertRowid
+            roomId: Number(result.lastInsertRowid)
         });
 
     } catch (err) {
@@ -70,11 +72,10 @@ router.post("/create", (req, res) => {
 // 방 목록
 // ======================
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
 
     try {
-        const rows = db.prepare(
-            `
+        const result = await db.execute(`
             SELECT
                 id,
                 title,
@@ -87,10 +88,9 @@ router.get("/", (req, res) => {
                 END AS hasPassword
             FROM rooms
             ORDER BY id DESC
-            `
-        ).all();
+        `);
 
-        res.json(rows);
+        res.json(result.rows);
 
     } catch (err) {
         console.log(err);
@@ -106,7 +106,7 @@ router.get("/", (req, res) => {
 // 방 입장
 // ======================
 
-router.post("/join", (req, res) => {
+router.post("/join", async (req, res) => {
 
     const {
         roomId,
@@ -114,9 +114,12 @@ router.post("/join", (req, res) => {
     } = req.body;
 
     try {
-        const room = db
-            .prepare("SELECT * FROM rooms WHERE id=?")
-            .get(roomId);
+        const result = await db.execute({
+            sql: "SELECT * FROM rooms WHERE id=?",
+            args: [roomId],
+        });
+
+        const room = result.rows[0];
 
         if (!room) {
             return res.json({

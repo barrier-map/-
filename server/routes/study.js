@@ -9,14 +9,17 @@ const router = express.Router();
 // GET /api/study/memo/:userId
 // ======================
 
-router.get("/memo/:userId", (req, res) => {
+router.get("/memo/:userId", async (req, res) => {
 
     const { userId } = req.params;
 
     try {
-        const row = db
-            .prepare("SELECT content FROM study_memos WHERE user_id=?")
-            .get(userId);
+        const result = await db.execute({
+            sql: "SELECT content FROM study_memos WHERE user_id=?",
+            args: [userId],
+        });
+
+        const row = result.rows[0];
 
         res.json({
             success: true,
@@ -39,7 +42,7 @@ router.get("/memo/:userId", (req, res) => {
 // POST /api/study/memo
 // ======================
 
-router.post("/memo", (req, res) => {
+router.post("/memo", async (req, res) => {
 
     const { userId, content } = req.body;
 
@@ -51,14 +54,15 @@ router.post("/memo", (req, res) => {
     }
 
     try {
-        db.prepare(
-            `
+        await db.execute({
+            sql: `
             INSERT INTO study_memos (user_id, content, updated_at)
             VALUES (?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(user_id)
             DO UPDATE SET content=excluded.content, updated_at=CURRENT_TIMESTAMP
-            `
-        ).run(userId, content || "");
+            `,
+            args: [userId, content || ""],
+        });
 
         res.json({ success: true });
 
@@ -78,18 +82,19 @@ router.post("/memo", (req, res) => {
 // GET /api/study/goals/:userId
 // ======================
 
-router.get("/goals/:userId", (req, res) => {
+router.get("/goals/:userId", async (req, res) => {
 
     const { userId } = req.params;
 
     try {
-        const rows = db
-            .prepare("SELECT * FROM study_goals WHERE user_id=? ORDER BY id DESC")
-            .all(userId);
+        const result = await db.execute({
+            sql: "SELECT * FROM study_goals WHERE user_id=? ORDER BY id DESC",
+            args: [userId],
+        });
 
         res.json({
             success: true,
-            goals: rows
+            goals: result.rows
         });
 
     } catch (err) {
@@ -108,7 +113,7 @@ router.get("/goals/:userId", (req, res) => {
 // POST /api/study/goals
 // ======================
 
-router.post("/goals", (req, res) => {
+router.post("/goals", async (req, res) => {
 
     const { userId, content } = req.body;
 
@@ -120,14 +125,15 @@ router.post("/goals", (req, res) => {
     }
 
     try {
-        const result = db
-            .prepare("INSERT INTO study_goals (user_id, content) VALUES (?, ?)")
-            .run(userId, content);
+        const result = await db.execute({
+            sql: "INSERT INTO study_goals (user_id, content) VALUES (?, ?)",
+            args: [userId, content],
+        });
 
         res.json({
             success: true,
             goal: {
-                id: result.lastInsertRowid,
+                id: Number(result.lastInsertRowid),
                 user_id: userId,
                 content,
                 done: 0
@@ -150,14 +156,16 @@ router.post("/goals", (req, res) => {
 // PUT /api/study/goals/:id
 // ======================
 
-router.put("/goals/:id", (req, res) => {
+router.put("/goals/:id", async (req, res) => {
 
     const { id } = req.params;
     const { done } = req.body;
 
     try {
-        db.prepare("UPDATE study_goals SET done=? WHERE id=?")
-            .run(done ? 1 : 0, id);
+        await db.execute({
+            sql: "UPDATE study_goals SET done=? WHERE id=?",
+            args: [done ? 1 : 0, id],
+        });
 
         res.json({ success: true });
 
@@ -177,12 +185,15 @@ router.put("/goals/:id", (req, res) => {
 // DELETE /api/study/goals/:id
 // ======================
 
-router.delete("/goals/:id", (req, res) => {
+router.delete("/goals/:id", async (req, res) => {
 
     const { id } = req.params;
 
     try {
-        db.prepare("DELETE FROM study_goals WHERE id=?").run(id);
+        await db.execute({
+            sql: "DELETE FROM study_goals WHERE id=?",
+            args: [id],
+        });
 
         res.json({ success: true });
 
