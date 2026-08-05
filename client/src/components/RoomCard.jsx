@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
 
@@ -5,19 +6,10 @@ export default function RoomCard({ room }) {
 
     const navigate = useNavigate();
 
-    const joinRoom = async () => {
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordInput, setPasswordInput] = useState("");
 
-        let password = "";
-
-        if (room.hasPassword) {
-
-            const input = prompt("비밀번호를 입력하세요.");
-
-            if (input === null) return;
-
-            password = input;
-
-        }
+    const goToRoom = async (password) => {
 
         try {
 
@@ -25,94 +17,118 @@ export default function RoomCard({ room }) {
                 `${API_BASE_URL}/api/rooms/join`,
                 {
                     method: "POST",
-
                     headers: {
                         "Content-Type": "application/json"
                     },
-
                     body: JSON.stringify({
-
                         roomId: room.id,
-
                         password
-
                     })
-
                 }
             );
 
             const data = await response.json();
 
             if (data.success) {
-
                 navigate(`/room/${room.id}`);
-
-            }
-
-            else {
-
+            } else {
                 alert(data.message);
-
             }
 
-        }
-
-        catch (err) {
-
+        } catch (err) {
             console.log(err);
-
             alert("서버 연결 실패");
-
         }
 
     };
 
+    const joinRoom = () => {
+        if (room.hasPassword) {
+            setPasswordInput("");
+            setShowPasswordModal(true);
+            return;
+        }
+
+        goToRoom("");
+    };
+
+    const submitPassword = () => {
+        setShowPasswordModal(false);
+        goToRoom(passwordInput);
+    };
+
     return (
+        <>
+            <div className="room-card">
 
-        <div className="room-card">
+                <div className="room-info">
 
-            <div className="room-info">
+                    <h2>{room.title}</h2>
 
-                <h2>{room.title}</h2>
+                    <p>
+                        👥 최대 {room.max_users}명
+                    </p>
 
-                <p>
+                    <p>
+                        {room.hasPassword
+                            ? "🔒 비밀번호 방"
+                            : "🌐 공개방"}
+                    </p>
 
-                    👥 최대 {room.max_users}명
+                    <p>
+                        📅 {room.created_at
+                            ? new Date(room.created_at).toLocaleString("ko-KR")
+                            : "-"}
+                    </p>
 
-                </p>
+                </div>
 
-                <p>
-
-                    {room.hasPassword
-                        ? "🔒 비밀번호 방"
-                        : "🌐 공개방"}
-
-                </p>
-
-                <p>
-
-                    📅 {room.created_at
-                        ? new Date(room.created_at).toLocaleString("ko-KR")
-                        : "-"}
-
-                </p>
+                <button
+                    className="join-btn"
+                    onClick={joinRoom}
+                >
+                    🚪 입장
+                </button>
 
             </div>
 
-            <button
+            {showPasswordModal && (
+                <div className="modal-bg">
+                    <div className="modal">
 
-                className="join-btn"
+                        <h2>🔒 비밀번호 입력</h2>
 
-                onClick={joinRoom}
+                        <input
+                            type="password"
+                            placeholder="비밀번호를 입력하세요"
+                            value={passwordInput}
+                            autoFocus
+                            onChange={(e) => setPasswordInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") submitPassword();
+                            }}
+                        />
 
-            >
+                        <div className="modal-buttons">
+                            <button
+                                className="cancel-btn"
+                                onClick={() => setShowPasswordModal(false)}
+                            >
+                                취소
+                            </button>
 
-                🚪 입장
+                            <button
+                                className="create-btn"
+                                onClick={submitPassword}
+                            >
+                                입장
+                            </button>
+                        </div>
 
-            </button>
-
-        </div>
-
+                    </div>
+                </div>
+            )}
+        </>
     );
 
 }

@@ -12,6 +12,9 @@ export default function Room() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const myUsername = user?.username || "익명";
+
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
@@ -23,9 +26,7 @@ export default function Room() {
     toggleCamera,
     toggleMic,
     stopMedia,
-  } = useWebRTC(id);
-
-  const userCount = peers.length + 1; // 나 + 다른 참가자
+  } = useWebRTC(id, myUsername);
 
   useEffect(() => {
     socket.on("receive-message", (data) => {
@@ -42,7 +43,7 @@ export default function Room() {
 
     const data = {
       roomId: id,
-      user: "나",
+      user: myUsername,
       message,
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
@@ -74,10 +75,6 @@ export default function Room() {
             <h1>📹 캠스터디 방</h1>
 
             <p>방 번호 : {id}</p>
-
-            <p>
-              👥 현재 접속 인원 : {userCount} / 12명
-            </p>
           </div>
 
           <button
@@ -99,18 +96,22 @@ export default function Room() {
                 style={{
                   width: "100%",
                   height: "100%",
-                  borderRadius: "12px",
-                  background: "#000",
                   objectFit: "cover",
                 }}
               />
-              <h3>나 {!camOn && "(카메라 꺼짐)"} {!micOn && "🔇"}</h3>
+              <div className="video-overlay">
+                <span>{myUsername} (나)</span>
+                <span>{micOn ? "🎤" : "🔇"}</span>
+              </div>
             </div>
 
-            {peers.map(({ peerId, peer }) => (
+            {peers.map(({ peerId, peer, username, micOn: peerMicOn }) => (
               <div className="video-card" key={peerId}>
                 <PeerVideo peer={peer} />
-                <h3>참가자 {peerId.slice(0, 4)}</h3>
+                <div className="video-overlay">
+                  <span>{username}</span>
+                  <span>{peerMicOn ? "🎤" : "🔇"}</span>
+                </div>
               </div>
             ))}
           </div>

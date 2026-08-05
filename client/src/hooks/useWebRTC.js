@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import Peer from "simple-peer";
 import socket from "../socket";
 
-export default function useWebRTC(roomId) {
-  const [peers, setPeers] = useState([]); // [{ peerId, peer }]
+export default function useWebRTC(roomId, username) {
+  const [peers, setPeers] = useState([]); // [{ peerId, peer, username, micOn }]
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
 
@@ -32,8 +32,13 @@ export default function useWebRTC(roomId) {
       return peer;
     }
 
-    function addPeer(peerId, peer) {
-      const entry = { peerId, peer };
+    function addPeer(peerId, peer, peerUsername) {
+      const entry = {
+        peerId,
+        peer,
+        username: peerUsername || "익명",
+        micOn: true,
+      };
       peersRef.current = [...peersRef.current, entry];
       setPeers((prev) => [...prev, entry]);
     }
@@ -65,26 +70,38 @@ export default function useWebRTC(roomId) {
         }
 
         socket.connect();
-        socket.emit("join-room", roomId);
+        socket.emit("join-room", { roomId, username });
 
         // 방에 이미 있던 사람들 : 내가 먼저 연결을 건다 (initiator)
-        socket.on("existing-users", (userIds = []) => {
-          userIds.forEach((userId) => {
-            const peer = createPeer(userId, stream, true);
-            addPeer(userId, peer);
+        socket.on("existing-users", (users = []) => {
+          users.forEach((user) => {
+            const peer = createPeer(user.id, stream, true);
+            addPeer(user.id, peer, user.username);
           });
         });
 
         // 새로 들어온 사람 : 상대가 연결을 걸어올 때까지 기다린다
-        socket.on("user-joined", (userId) => {
-          const peer = createPeer(userId, stream, false);
-          addPeer(userId, peer);
+        socket.on("user-joined", (user) => {
+          const peer = createPeer(user.id, stream, false);
+          addPeer(user.id, peer, user.username);
         });
 
         // 상대방의 signal(offer/answer/ice 정보 포함)을 받아 해당 peer에 전달
         socket.on("signal", ({ sender, signal }) => {
           const target = peersRef.current.find((p) => p.peerId === sender);
           if (target) target.peer.signal(signal);
+        });
+
+        // 상대방의 마이크 on/off 상태 갱신
+        socket.on("mic-status", ({ socketId, micOn: peerMicOn }) => {
+          peersRef.current = peersRef.current.map((p) =>
+            p.peerId === socketId ? { ...p, micOn: peerMicOn } : p
+          );
+          setPeers((prev) =>
+            prev.map((p) =>
+              p.peerId === socketId ? { ...p, micOn: peerMicOn } : p
+            )
+          );
         });
 
         // 상대방이 나감
@@ -105,6 +122,7 @@ export default function useWebRTC(roomId) {
       socket.off("existing-users");
       socket.off("user-joined");
       socket.off("signal");
+      socket.off("mic-status");
       socket.off("user-left");
 
       peersRef.current.forEach(({ peer }) => peer.destroy());
@@ -117,24 +135,30 @@ export default function useWebRTC(roomId) {
 
       socket.disconnect();
     };
-  }, [roomId]);
+  }, [roomId, username]);
 
   // 카메라 on/off
   const toggleCamera = () => {
     if (!myStream.current) return;
+
     const track = myStream.current.getVideoTracks()[0];
     if (!track) return;
+
     track.enabled = !track.enabled;
     setCamOn(track.enabled);
   };
 
-  // 마이크 on/off
+  // 마이크 on/off (다른 사람에게도 상태를 알림)
   const toggleMic = () => {
     if (!myStream.current) return;
+
     const track = myStream.current.getAudioTracks()[0];
     if (!track) return;
+
     track.enabled = !track.enabled;
     setMicOn(track.enabled);
+
+    socket.emit("mic-status", { roomId, micOn: track.enabled });
   };
 
   // 방 나가기 : 캠/마이크를 즉시 확실히 끈다

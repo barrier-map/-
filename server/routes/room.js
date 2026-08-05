@@ -17,7 +17,26 @@ router.post("/create", (req, res) => {
         max_users
     } = req.body;
 
+    if (!title || !title.trim()) {
+        return res.json({
+            success: false,
+            message: "방 이름을 입력해주세요."
+        });
+    }
+
     try {
+        // 방 이름 중복 체크
+        const existing = db
+            .prepare("SELECT id FROM rooms WHERE title = ?")
+            .get(title.trim());
+
+        if (existing) {
+            return res.json({
+                success: false,
+                message: "이미 사용 중인 방 이름입니다."
+            });
+        }
+
         const result = db.prepare(
             `
             INSERT INTO rooms
@@ -25,7 +44,7 @@ router.post("/create", (req, res) => {
             VALUES(?,?,?,?)
             `
         ).run(
-            title,
+            title.trim(),
             password || "",
             owner_id || 0,
             max_users || 12

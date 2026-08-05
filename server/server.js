@@ -108,22 +108,23 @@ io.on("connection", (socket) => {
 
   console.log("접속 :", socket.id);
 
-  socket.on("join-room", (roomId) => {
+  socket.on("join-room", ({ roomId, username }) => {
 
     socket.roomId = roomId;
+    socket.username = username || "익명";
 
     if (!rooms[roomId]) {
       rooms[roomId] = [];
     }
 
     // ==========================
-    // WebRTC - 기존 참가자 목록을 새로 들어온 사람에게만 전송
+    // WebRTC - 기존 참가자 목록(닉네임 포함)을 새로 들어온 사람에게만 전송
     // (반드시 push 하기 전에 보내야 "나 자신"이 목록에 안 들어감)
     // ==========================
     socket.emit("existing-users", rooms[roomId]);
 
-    if (!rooms[roomId].includes(socket.id)) {
-      rooms[roomId].push(socket.id);
+    if (!rooms[roomId].some((p) => p.id === socket.id)) {
+      rooms[roomId].push({ id: socket.id, username: socket.username });
     }
 
     socket.join(roomId);
@@ -134,7 +135,10 @@ io.on("connection", (socket) => {
     );
 
     // 기존 참가자들에게 새 참가자 입장을 알림 (peer 연결 준비)
-    socket.to(roomId).emit("user-joined", socket.id);
+    socket.to(roomId).emit("user-joined", {
+      id: socket.id,
+      username: socket.username,
+    });
 
   });
 
@@ -149,6 +153,16 @@ io.on("connection", (socket) => {
       signal,
     });
 
+  });
+
+  // 마이크 on/off 상태를 같은 방 사람들에게 알림
+  socket.on("mic-status", ({ micOn }) => {
+    if (!socket.roomId) return;
+
+    socket.to(socket.roomId).emit("mic-status", {
+      socketId: socket.id,
+      micOn,
+    });
   });
 
   socket.on("send-message", (data) => {
@@ -166,7 +180,7 @@ io.on("connection", (socket) => {
     if (!roomId || !rooms[roomId]) return;
 
     rooms[roomId] = rooms[roomId].filter(
-      (id) => id !== socket.id
+      (p) => p.id !== socket.id
     );
 
     io.to(roomId).emit(

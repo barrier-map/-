@@ -60,6 +60,8 @@
 
 .video-card{
 
+    position:relative;
+
     background:#222;
 
     color:white;
@@ -68,6 +70,8 @@
 
     border-radius:18px;
 
+    overflow:hidden;
+
     display:flex;
 
     justify-content:center;
@@ -75,6 +79,32 @@
     align-items:center;
 
     font-size:22px;
+
+}
+
+.video-overlay{
+
+    position:absolute;
+
+    left:10px;
+
+    bottom:10px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    background:rgba(0,0,0,.55);
+
+    color:white;
+
+    padding:4px 10px;
+
+    border-radius:10px;
+
+    font-size:14px;
 
 }
 
