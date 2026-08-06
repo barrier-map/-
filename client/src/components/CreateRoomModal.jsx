@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { API_BASE_URL } from "../config";
+import { useAlert } from "../context/AlertContext";
 
 export default function CreateRoomModal({
   open,
@@ -9,12 +10,13 @@ export default function CreateRoomModal({
   const [title, setTitle] = useState("");
   const [password, setPassword] = useState("");
   const [maxUsers, setMaxUsers] = useState(6);
+  const { alert } = useAlert();
 
   if (!open) return null;
 
   const createRoom = async () => {
     if (title.trim() === "") {
-      alert("방 이름을 입력해주세요.");
+      await alert("방 이름을 입력해주세요.");
       return;
     }
 
@@ -40,7 +42,7 @@ export default function CreateRoomModal({
       const data = await response.json();
 
       if (data.success) {
-        alert("방이 생성되었습니다.");
+        await alert("방이 생성되었습니다.");
 
         setTitle("");
         setPassword("");
@@ -49,11 +51,11 @@ export default function CreateRoomModal({
         onCreated();
         onClose();
       } else {
-        alert(data.message);
+        await alert(data.message);
       }
     } catch (err) {
       console.error(err);
-      alert("방 생성 실패");
+      await alert("방 생성 실패");
     }
   };
 
@@ -77,16 +79,19 @@ export default function CreateRoomModal({
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <select
+        <label className="modal-label">최대 인원 (2~12명)</label>
+
+        <input
+          type="number"
+          min={2}
+          max={12}
           value={maxUsers}
-          onChange={(e) => setMaxUsers(Number(e.target.value))}
-        >
-          <option value={2}>2명</option>
-          <option value={4}>4명</option>
-          <option value={6}>6명</option>
-          <option value={8}>8명</option>
-          <option value={10}>10명</option>
-        </select>
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            if (Number.isNaN(value)) return;
+            setMaxUsers(Math.min(12, Math.max(2, value)));
+          }}
+        />
 
         <div className="modal-buttons">
           <button className="cancel-btn" onClick={onClose}>

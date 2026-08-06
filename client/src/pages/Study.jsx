@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
+import { useAlert } from "../context/AlertContext";
 
 import "../styles/Study.css";
 import { API_BASE_URL } from "../config";
@@ -15,6 +16,7 @@ const BREAK_TIME = 5 * 60; // 5분
 export default function Study() {
   const { user } = useAuth();
   const userId = user?.id;
+  const { alert } = useAlert();
 
   // ==========================
   // 포모도로 타이머

@@ -5,12 +5,14 @@ import Sidebar from "../components/Sidebar";
 import PeerVideo from "../components/PeerVideo";
 import useWebRTC from "../hooks/useWebRTC";
 import socket from "../socket";
+import { useAlert } from "../context/AlertContext";
 
 import "../styles/Room.css";
 
 export default function Room() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { confirm } = useAlert();
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const myUsername = user?.username || "익명";
@@ -58,8 +60,10 @@ export default function Room() {
     setMessage("");
   };
 
-  const leaveRoom = () => {
-    if (window.confirm("정말 방을 나가시겠습니까?")) {
+  const leaveRoom = async () => {
+    const ok = await confirm("정말 방을 나가시겠습니까?");
+
+    if (ok) {
       stopMedia();
       navigate("/studyroom");
     }

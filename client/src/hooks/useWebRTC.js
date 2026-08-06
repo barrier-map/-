@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import Peer from "simple-peer";
 import socket from "../socket";
+import { useAlert } from "../context/AlertContext";
 
 export default function useWebRTC(roomId, username) {
   const [peers, setPeers] = useState([]); // [{ peerId, peer, username, micOn }]
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
+  const { alert } = useAlert();
 
   const myVideo = useRef();
   const myStream = useRef();
@@ -110,7 +112,7 @@ export default function useWebRTC(roomId, username) {
         });
       } catch (err) {
         console.error("카메라/마이크를 사용할 수 없습니다.", err);
-        alert("카메라 또는 마이크 권한을 허용해주세요.");
+        await alert("카메라 또는 마이크 권한을 허용해주세요.");
       }
     }
 

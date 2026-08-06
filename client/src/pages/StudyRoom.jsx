@@ -4,10 +4,13 @@ import RoomCard from "../components/RoomCard";
 import CreateRoomModal from "../components/CreateRoomModal";
 import "../styles/StudyRoom.css";
 import { API_BASE_URL } from "../config";
+import { useAlert } from "../context/AlertContext";
 
 export default function StudyRoom() {
   const [rooms, setRooms] = useState([]);
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const { alert } = useAlert();
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -24,13 +27,18 @@ export default function StudyRoom() {
       }
     } catch (error) {
       console.error(error);
-      alert("방 목록을 불러오지 못했습니다.");
+      await alert("방 목록을 불러오지 못했습니다.");
     }
   };
 
   useEffect(() => {
     loadRooms();
   }, []);
+
+  // 검색어로 방 이름 필터링 (대소문자 구분 없이)
+  const filteredRooms = rooms.filter((room) =>
+    room.title.toLowerCase().includes(search.trim().toLowerCase())
+  );
 
   return (
     <>
@@ -59,21 +67,43 @@ export default function StudyRoom() {
 
         </div>
 
+        <input
+          type="text"
+          placeholder="🔍 방 이름으로 검색"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px 16px",
+            borderRadius: "12px",
+            border: "1px solid #ddd",
+            marginBottom: "20px",
+            fontSize: "15px",
+            boxSizing: "border-box",
+          }}
+        />
+
         <div className="room-list">
 
-          {rooms.length === 0 ? (
+          {filteredRooms.length === 0 ? (
 
             <div className="empty-room">
-              <h2>📚 아직 만들어진 방이 없습니다.</h2>
+              <h2>
+                {rooms.length === 0
+                  ? "📚 아직 만들어진 방이 없습니다."
+                  : "🔍 검색 결과가 없습니다."}
+              </h2>
 
               <p style={{ marginTop: "10px" }}>
-                첫 번째 캠스터디 방을 만들어보세요!
+                {rooms.length === 0
+                  ? "첫 번째 캠스터디 방을 만들어보세요!"
+                  : "다른 검색어로 다시 찾아보세요."}
               </p>
             </div>
 
           ) : (
 
-            rooms.map((room) => (
+            filteredRooms.map((room) => (
               <RoomCard
                 key={room.id}
                 room={room}

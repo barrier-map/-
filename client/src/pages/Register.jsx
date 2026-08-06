@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
+import { useAlert } from "../context/AlertContext";
 
 export default function Register() {
 
   const navigate = useNavigate();
+  const { alert } = useAlert();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -35,13 +37,13 @@ export default function Register() {
 
       if (data.success) {
 
-        alert("회원가입이 완료되었습니다.");
+        await alert("회원가입이 완료되었습니다.");
 
         navigate("/");
 
       } else {
 
-        alert(data.message);
+        await alert(data.message);
 
       }
 
@@ -49,7 +51,7 @@ export default function Register() {
 
       console.log(err);
 
-      alert("서버 연결 실패");
+      await alert("서버 연결 실패");
 
     }
 

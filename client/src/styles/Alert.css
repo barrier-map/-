@@ -1,0 +1,74 @@
+/* 사이트 어디서든 뜨는 alert/confirm 팝업 스타일
+   (모든 페이지에서 공통으로 쓰이므로 AlertContext에서 직접 불러옴) */
+
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal {
+  width: 380px;
+  max-width: 90%;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  animation: alert-popup 0.2s;
+  box-sizing: border-box;
+}
+
+@keyframes alert-popup {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.alert-message {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 25px;
+  white-space: pre-line;
+  color: #222;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-btn {
+  padding: 12px 20px;
+  background: #ddd;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.cancel-btn:hover {
+  background: #cfcfcf;
+}
+
+.confirm-btn {
+  padding: 12px 20px;
+  background: #6d5dfc;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.confirm-btn:hover {
+  background: #5a4ce0;
+}

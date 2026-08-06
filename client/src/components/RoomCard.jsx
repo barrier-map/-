@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
+import { useAlert } from "../context/AlertContext";
 
 export default function RoomCard({ room }) {
 
     const navigate = useNavigate();
+    const { alert } = useAlert();
 
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordInput, setPasswordInput] = useState("");
@@ -32,12 +34,12 @@ export default function RoomCard({ room }) {
             if (data.success) {
                 navigate(`/room/${room.id}`);
             } else {
-                alert(data.message);
+                await alert(data.message);
             }
 
         } catch (err) {
             console.log(err);
-            alert("서버 연결 실패");
+            await alert("서버 연결 실패");
         }
 
     };

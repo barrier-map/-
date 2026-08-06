@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../config";
+import { useAlert } from "../context/AlertContext";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { alert } = useAlert();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,15 +32,15 @@ export default function Login() {
       if (data.success) {
         login(data.token, data.user);
 
-        alert("로그인 성공!");
+        await alert("로그인 성공!");
 
         navigate("/dashboard");
       } else {
-        alert(data.message);
+        await alert(data.message);
       }
     } catch (error) {
       console.error(error);
-      alert("서버 연결 실패");
+      await alert("서버 연결 실패");
     }
   };
 
