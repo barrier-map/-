@@ -8,6 +8,7 @@ const db = require("./database/database");
 const authRouter = require("./routes/auth");
 const roomRouter = require("./routes/room");
 const studyRouter = require("./routes/study");
+const attendanceRouter = require("./routes/attendance");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +35,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/study", studyRouter);
+app.use("/api/attendance", attendanceRouter);
 
 // ==========================
 // DB 생성 (Turso는 비동기 방식이라 async 함수로 감싸서 실행)
@@ -49,6 +51,20 @@ async function initTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // ==========================
+// 출석
+// 하루에 한 번만 저장
+// ==========================
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS attendance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    attendance_date DATE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, attendance_date)
+  )
+`);
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS rooms (
