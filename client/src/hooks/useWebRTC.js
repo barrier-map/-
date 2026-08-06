@@ -3,7 +3,7 @@ import Peer from "simple-peer";
 import socket from "../socket";
 import { useAlert } from "../context/AlertContext";
 
-export default function useWebRTC(roomId, username) {
+export default function useWebRTC(roomId, username, userId) {
   const [peers, setPeers] = useState([]); // [{ peerId, peer, username, micOn }]
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
@@ -72,7 +72,7 @@ export default function useWebRTC(roomId, username) {
         }
 
         socket.connect();
-        socket.emit("join-room", { roomId, username });
+        socket.emit("join-room", { roomId, username, userId });
 
         // 방에 이미 있던 사람들 : 내가 먼저 연결을 건다 (initiator)
         socket.on("existing-users", (users = []) => {
@@ -137,7 +137,7 @@ export default function useWebRTC(roomId, username) {
 
       socket.disconnect();
     };
-  }, [roomId, username]);
+  }, [roomId, username, userId]);
 
   // 카메라 on/off
   const toggleCamera = () => {

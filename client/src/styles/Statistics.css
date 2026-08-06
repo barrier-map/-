@@ -1,0 +1,170 @@
+.statistics-page {
+  margin-left: 250px;
+  padding: 40px;
+  max-width: 900px;
+}
+
+.statistics-page h1 {
+  margin: 0;
+}
+
+.statistics-sub {
+  color: #888;
+  margin-top: 8px;
+  margin-bottom: 25px;
+}
+
+.stat-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stat-tabs button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #eee;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.stat-tabs button.active {
+  background: #6d5dfc;
+  color: white;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.calendar-header h2 {
+  margin: 0;
+  min-width: 140px;
+  text-align: center;
+}
+
+.calendar-header button {
+  border: none;
+  background: #f0f0f5;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.month-summary {
+  text-align: center;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.month-summary strong {
+  color: #6d5dfc;
+  font-size: 18px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.weekday-row {
+  margin-bottom: 6px;
+}
+
+.weekday-label {
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #f7f7fb;
+  color: #333;
+  gap: 4px;
+}
+
+.day-cell.empty {
+  background: transparent;
+}
+
+.day-cell.today {
+  border: 2px solid #6d5dfc;
+}
+
+.day-cell.attended {
+  background: #ece9ff;
+  color: #6d5dfc;
+  font-weight: 600;
+}
+
+.day-cell .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6d5dfc;
+}
+
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 15px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  width: 150px;
+  font-size: 14px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.bar-track {
+  flex: 1;
+  height: 14px;
+  background: #f0f0f5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: #6d5dfc;
+  border-radius: 8px;
+  transition: width 0.3s;
+}
+
+.bar-count {
+  width: 40px;
+  text-align: right;
+  font-size: 14px;
+  color: #333;
+  flex-shrink: 0;
+}

@@ -28,7 +28,7 @@ export default function Room() {
     toggleCamera,
     toggleMic,
     stopMedia,
-  } = useWebRTC(id, myUsername);
+  } = useWebRTC(id, myUsername, user?.id);
 
   useEffect(() => {
     socket.on("receive-message", (data) => {

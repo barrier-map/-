@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import StudyRoom from "./pages/StudyRoom";
 import Study from "./pages/Study";
+import Statistics from "./pages/Statistics";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/studyroom" element={<StudyRoom />} />
         <Route path="/room/:id" element={<Room />} />
         <Route path="/study" element={<Study />} />
+        <Route path="/statistics" element={<Statistics />} />
       </Routes>
     </BrowserRouter>
   );
