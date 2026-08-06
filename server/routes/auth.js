@@ -126,4 +126,66 @@ router.post("/login", async (req, res) => {
 
 });
 
+// ===========================
+// 토큰 확인 (자동 로그인용)
+// GET /api/auth/verify
+// ===========================
+router.get("/verify", (req, res) => {
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({
+            success: false,
+            message: "토큰이 없습니다."
+        });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+
+const decoded = jwt.verify(token, SECRET_KEY);
+
+db.execute({
+    sql: "SELECT id, username, email FROM users WHERE id = ?",
+    args: [decoded.id],
+})
+.then((result) => {
+
+    if (result.rows.length === 0) {
+        return res.status(401).json({
+            success: false,
+            message: "존재하지 않는 사용자입니다."
+        });
+    }
+
+    res.json({
+        success: true,
+        user: result.rows[0]
+    });
+
+})
+.catch((err) => {
+
+    console.error(err);
+
+    res.status(500).json({
+        success: false,
+        message: "DB 오류"
+    });
+
+});
+
+    } catch (err) {
+
+        return res.status(401).json({
+            success: false,
+            message: "토큰이 만료되었습니다."
+        });
+
+    }
+
+});
+
 module.exports = router;
