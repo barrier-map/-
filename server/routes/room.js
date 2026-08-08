@@ -102,7 +102,14 @@ router.get("/", async (req, res) => {
             ORDER BY id DESC
         `);
 
-        res.json(result.rows);
+        res.json(
+            result.rows.map((row) => ({
+                ...row,
+                id: Number(row.id),
+                max_users: Number(row.max_users),
+                hasPassword: Number(row.hasPassword),
+            }))
+        );
 
     } catch (err) {
         console.log(err);
@@ -199,7 +206,7 @@ router.get("/joined/:userId", async (req, res) => {
 
         res.json({
             success: true,
-            roomIds: result.rows.map((row) => row.room_id),
+            roomIds: result.rows.map((row) => Number(row.room_id)),
         });
 
     } catch (err) {
