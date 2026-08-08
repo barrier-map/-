@@ -10,6 +10,8 @@ export default function StudyRoom() {
   const [rooms, setRooms] = useState([]);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState("all"); // "all" | "mine"
+  const [joinedRoomIds, setJoinedRoomIds] = useState([]);
   const { alert } = useAlert();
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -31,14 +33,35 @@ export default function StudyRoom() {
     }
   };
 
+  // 내가 입장했던 방 목록 불러오기
+  const loadJoinedRooms = async () => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/rooms/joined/${user.id}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setJoinedRoomIds(data.roomIds);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     loadRooms();
+    loadJoinedRooms();
   }, []);
 
-  // 검색어로 방 이름 필터링 (대소문자 구분 없이)
-  const filteredRooms = rooms.filter((room) =>
-    room.title.toLowerCase().includes(search.trim().toLowerCase())
-  );
+  // 검색어 + 탭(전체/내 방) 으로 필터링
+  const filteredRooms = rooms
+    .filter((room) =>
+      room.title.toLowerCase().includes(search.trim().toLowerCase())
+    )
+    .filter((room) => (tab === "mine" ? joinedRoomIds.includes(room.id) : true));
 
   return (
     <>
@@ -65,6 +88,21 @@ export default function StudyRoom() {
             ➕ 방 만들기
           </button>
 
+        </div>
+
+        <div className="stat-tabs" style={{ marginBottom: 15 }}>
+          <button
+            className={tab === "all" ? "active" : ""}
+            onClick={() => setTab("all")}
+          >
+            전체
+          </button>
+          <button
+            className={tab === "mine" ? "active" : ""}
+            onClick={() => setTab("mine")}
+          >
+            내 방
+          </button>
         </div>
 
         <input

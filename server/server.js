@@ -8,7 +8,6 @@ const db = require("./database/database");
 const authRouter = require("./routes/auth");
 const roomRouter = require("./routes/room");
 const studyRouter = require("./routes/study");
-const attendanceRouter = require("./routes/attendance");
 
 const app = express();
 const server = http.createServer(app);
@@ -35,7 +34,6 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/study", studyRouter);
-app.use("/api/attendance", attendanceRouter);
 
 // ==========================
 // DB 생성 (Turso는 비동기 방식이라 async 함수로 감싸서 실행)
@@ -51,20 +49,6 @@ async function initTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
-  // ==========================
-// 출석
-// 하루에 한 번만 저장
-// ==========================
-await db.execute(`
-  CREATE TABLE IF NOT EXISTS attendance (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    attendance_date DATE NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, attendance_date)
-  )
-`);
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS rooms (
@@ -98,6 +82,52 @@ await db.execute(`
     )
   `);
 
+  // 출석 기록 (캠스터디 방에 접속한 날짜, 하루 1번만 기록됨)
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS attendance (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      UNIQUE(user_id, date)
+    )
+  `);
+
+  // 사용자가 비밀번호를 입력해 들어간(또는 입장한) 방 기록 ("내 방" 탭용)
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS room_visits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      room_id INTEGER NOT NULL,
+      visited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, room_id)
+    )
+  `);
+
+}
+
+// 한국 시간(KST) 기준으로 오늘 날짜를 'YYYY-MM-DD' 형태로 반환
+function getTodayKST() {
+  const now = new Date();
+
+  const kstString = now.toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Seoul",
+  });
+
+  return kstString; // 'sv-SE' 로케일은 YYYY-MM-DD 형식을 그대로 줌
+}
+
+// 캠스터디 방 접속 시 출석 기록 (하루에 한 번만 기록되도록 UNIQUE 제약 활용)
+async function markAttendance(userId) {
+  if (!userId) return;
+
+  try {
+    await db.execute({
+      sql: "INSERT OR IGNORE INTO attendance (user_id, date) VALUES (?, ?)",
+      args: [userId, getTodayKST()],
+    });
+  } catch (err) {
+    console.error("출석 기록 실패:", err);
+  }
 }
 
 // ==========================
@@ -128,10 +158,13 @@ io.on("connection", (socket) => {
 
   console.log("접속 :", socket.id);
 
-  socket.on("join-room", ({ roomId, username }) => {
+  socket.on("join-room", ({ roomId, username, userId }) => {
 
     socket.roomId = roomId;
     socket.username = username || "익명";
+
+    // 출석 기록 (하루 1번만 기록됨, 실패해도 방 입장에는 영향 없음)
+    markAttendance(userId);
 
     if (!rooms[roomId]) {
       rooms[roomId] = [];
