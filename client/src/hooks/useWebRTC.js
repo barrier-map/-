@@ -13,6 +13,40 @@ export default function useWebRTC(roomId, username, userId) {
   const myStream = useRef();
   const peersRef = useRef([]); // 최신 peer 목록 (클로저 문제 방지용)
 
+  // ===== 타임랩스용 프레임 캡처 =====
+  const framesRef = useRef([]); // 캡처된 사진(dataURL)들
+  const captureTimerRef = useRef(null);
+  const FRAME_INTERVAL_MS = 2000; // 2초마다 한 장 캡처
+  const MAX_FRAMES = 2000; // 너무 오래 켜둬도 메모리가 넘치지 않도록 상한선
+
+  function stopCapturing() {
+    if (captureTimerRef.current) {
+      clearInterval(captureTimerRef.current);
+      captureTimerRef.current = null;
+    }
+  }
+
+  function startCapturing() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 240;
+    canvas.height = 135;
+    const ctx = canvas.getContext("2d");
+
+    captureTimerRef.current = setInterval(() => {
+      const video = myVideo.current;
+
+      if (!video || video.readyState < 2) return;
+      if (framesRef.current.length >= MAX_FRAMES) return;
+
+      try {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        framesRef.current.push(canvas.toDataURL("image/jpeg", 0.4));
+      } catch (e) {
+        // 캡처 한 번 실패하는 건 타임랩스에 큰 영향 없으니 무시
+      }
+    }, FRAME_INTERVAL_MS);
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -71,6 +105,8 @@ export default function useWebRTC(roomId, username, userId) {
           myVideo.current.srcObject = stream;
         }
 
+        startCapturing();
+
         socket.connect();
         socket.emit("join-room", { roomId, username, userId });
 
@@ -121,6 +157,8 @@ export default function useWebRTC(roomId, username, userId) {
     return () => {
       cancelled = true;
 
+      stopCapturing();
+
       socket.off("existing-users");
       socket.off("user-joined");
       socket.off("signal");
@@ -165,6 +203,8 @@ export default function useWebRTC(roomId, username, userId) {
 
   // 방 나가기 : 캠/마이크를 즉시 확실히 끈다
   const stopMedia = () => {
+    stopCapturing();
+
     peersRef.current.forEach(({ peer }) => peer.destroy());
     peersRef.current = [];
     setPeers([]);
@@ -176,6 +216,9 @@ export default function useWebRTC(roomId, username, userId) {
     socket.disconnect();
   };
 
+  // 지금까지 캡처된 타임랩스용 사진들을 가져옴
+  const getFrames = () => framesRef.current;
+
   return {
     myVideo,
     peers,
@@ -184,5 +227,6 @@ export default function useWebRTC(roomId, username, userId) {
     toggleCamera,
     toggleMic,
     stopMedia,
+    getFrames,
   };
 }

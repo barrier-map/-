@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar";
 import PeerVideo from "../components/PeerVideo";
+import TimelapseModal from "../components/TimelapseModal";
 import useWebRTC from "../hooks/useWebRTC";
 import socket from "../socket";
 import { useAlert } from "../context/AlertContext";
@@ -19,6 +20,8 @@ export default function Room() {
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [showTimelapse, setShowTimelapse] = useState(false);
+  const [timelapseFrames, setTimelapseFrames] = useState([]);
 
   const {
     myVideo,
@@ -28,6 +31,7 @@ export default function Room() {
     toggleCamera,
     toggleMic,
     stopMedia,
+    getFrames,
   } = useWebRTC(id, myUsername, user?.id);
 
   useEffect(() => {
@@ -63,8 +67,16 @@ export default function Room() {
   const leaveRoom = async () => {
     const ok = await confirm("정말 방을 나가시겠습니까?");
 
-    if (ok) {
-      stopMedia();
+    if (!ok) return;
+
+    const frames = getFrames();
+    stopMedia();
+
+    // 사진이 충분히 모였으면 타임랩스 만들기 화면을 먼저 보여줌
+    if (frames.length >= 5) {
+      setTimelapseFrames(frames);
+      setShowTimelapse(true);
+    } else {
       navigate("/studyroom");
     }
   };
@@ -222,6 +234,16 @@ export default function Room() {
           </button>
         </div>
       </div>
+
+      {showTimelapse && (
+        <TimelapseModal
+          frames={timelapseFrames}
+          onClose={() => {
+            setShowTimelapse(false);
+            navigate("/studyroom");
+          }}
+        />
+      )}
     </>
   );
 }

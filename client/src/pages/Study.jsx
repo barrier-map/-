@@ -8,6 +8,7 @@ import "../styles/Study.css";
 import { API_BASE_URL } from "../config";
 
 const API_URL = `${API_BASE_URL}/api/study`;
+const ATTENDANCE_URL = `${API_BASE_URL}/api/attendance`;
 
 // 포모도로 기본 시간 (초 단위)
 const WORK_TIME = 25 * 60; // 25분
@@ -62,6 +63,40 @@ export default function Study() {
     setMode("work");
     setTimeLeft(WORK_TIME);
   };
+  // ==========================
+// 출석 체크
+// ==========================
+const checkAttendance = async () => {
+
+  if (!userId) return;
+
+  try {
+
+    const response = await fetch(`${ATTENDANCE_URL}/check`, {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        userId,
+      }),
+
+    });
+
+    const data = await response.json();
+
+    console.log("출석 :", data.message);
+
+  } catch (err) {
+
+    console.error("출석 실패", err);
+
+  }
+
+};
 
   // ==========================
   // 공부메모 (자동저장)
