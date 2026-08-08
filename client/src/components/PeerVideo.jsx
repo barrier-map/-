@@ -1,21 +1,13 @@
 import { useEffect, useRef } from "react";
 
-export default function PeerVideo({ peer }) {
+export default function PeerVideo({ stream }) {
   const videoRef = useRef();
 
   useEffect(() => {
-    if (!peer) return;
-
-    peer.on("stream", (stream) => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    });
-
-    return () => {
-      peer.removeAllListeners("stream");
-    };
-  }, [peer]);
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
 
   return (
     <video

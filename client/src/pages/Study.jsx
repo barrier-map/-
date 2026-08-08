@@ -1,18 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
+import PomodoroSettingsModal from "../components/PomodoroSettingsModal";
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
+import { usePomodoro } from "../context/PomodoroContext";
 
 import "../styles/Study.css";
 import { API_BASE_URL } from "../config";
 
 const API_URL = `${API_BASE_URL}/api/study`;
-const ATTENDANCE_URL = `${API_BASE_URL}/api/attendance`;
-
-// 포모도로 기본 시간 (초 단위)
-const WORK_TIME = 25 * 60; // 25분
-const BREAK_TIME = 5 * 60; // 5분
 
 export default function Study() {
   const { user } = useAuth();
@@ -20,83 +17,19 @@ export default function Study() {
   const { alert } = useAlert();
 
   // ==========================
-  // 포모도로 타이머
+  // 포모도로 타이머 (앱 전체에서 공유되는 타이머, 다른 페이지/캠스터디에서도 유지됨)
   // ==========================
-  const [mode, setMode] = useState("work"); // "work" | "break"
-  const [timeLeft, setTimeLeft] = useState(WORK_TIME);
-  const [running, setRunning] = useState(false);
-  const [cycleCount, setCycleCount] = useState(0);
+  const {
+    mode,
+    timeLeft,
+    running,
+    cycleCount,
+    setRunning,
+    resetPomodoro,
+    formatTime,
+  } = usePomodoro();
 
-  useEffect(() => {
-    if (!running) return;
-
-    if (timeLeft <= 0) {
-      // 시간이 다 되면 자동으로 공부 <-> 휴식 전환
-      if (mode === "work") {
-        setCycleCount((prev) => prev + 1);
-        setMode("break");
-        setTimeLeft(BREAK_TIME);
-        alert("🎉 25분 공부 완료! 5분 쉬어가세요.");
-      } else {
-        setMode("work");
-        setTimeLeft(WORK_TIME);
-        alert("⏰ 휴식 끝! 다시 공부를 시작해볼까요?");
-      }
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [running, timeLeft, mode]);
-
-  const formatTime = (seconds) => {
-    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
-  const resetPomodoro = () => {
-    setRunning(false);
-    setMode("work");
-    setTimeLeft(WORK_TIME);
-  };
-  // ==========================
-// 출석 체크
-// ==========================
-const checkAttendance = async () => {
-
-  if (!userId) return;
-
-  try {
-
-    const response = await fetch(`${ATTENDANCE_URL}/check`, {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        userId,
-      }),
-
-    });
-
-    const data = await response.json();
-
-    console.log("출석 :", data.message);
-
-  } catch (err) {
-
-    console.error("출석 실패", err);
-
-  }
-
-};
+  const [showSettings, setShowSettings] = useState(false);
 
   // ==========================
   // 공부메모 (자동저장)
@@ -240,7 +173,29 @@ const checkAttendance = async () => {
         <div className="study-grid">
           {/* 포모도로 */}
           <div className="study-box pomodoro-box">
-            <h2>⏱ 포모도로</h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h2>⏱ 포모도로</h2>
+
+              <button
+                onClick={() => setShowSettings(true)}
+                style={{
+                  border: "none",
+                  background: "#f0f0f5",
+                  borderRadius: 8,
+                  padding: "6px 10px",
+                  cursor: "pointer",
+                  fontSize: 13,
+                }}
+              >
+                ⚙️ 설정
+              </button>
+            </div>
 
             <div className={`pomodoro-mode ${mode}`}>
               {mode === "work" ? "🧠 공부 시간" : "☕ 휴식 시간"}
@@ -263,6 +218,10 @@ const checkAttendance = async () => {
             <div className="pomodoro-count">
               오늘 완료한 포모도로 : {cycleCount}회
             </div>
+
+            <p style={{ fontSize: 12, color: "#999", marginTop: 8 }}>
+              💡 이 타이머는 캠스터디 방에 들어가도 계속 돌아가요.
+            </p>
           </div>
 
           {/* 공부메모 */}
@@ -321,6 +280,10 @@ const checkAttendance = async () => {
           </div>
         </div>
       </div>
+
+      {showSettings && (
+        <PomodoroSettingsModal onClose={() => setShowSettings(false)} />
+      )}
     </>
   );
 }

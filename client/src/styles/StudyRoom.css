@@ -229,6 +229,18 @@
 
 }
 
+.modal-label{
+
+    display:block;
+
+    font-size:13px;
+
+    color:#666;
+
+    margin-bottom:6px;
+
+}
+
 .modal input,
 .modal select{
 
@@ -333,5 +345,37 @@
     width:90%;
 
 }
+
+}
+
+.stat-tabs{
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+.stat-tabs button{
+
+    padding:10px 20px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#eee;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+}
+
+.stat-tabs button.active{
+
+    background:#6d5dfc;
+
+    color:white;
 
 }
