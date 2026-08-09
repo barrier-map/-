@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
 import { useAlert } from "../context/AlertContext";
 
-export default function RoomCard({ room }) {
+export default function RoomCard({ room, onDeleted }) {
 
     const navigate = useNavigate();
-    const { alert } = useAlert();
+    const { alert, confirm } = useAlert();
 
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordInput, setPasswordInput] = useState("");
@@ -14,6 +14,8 @@ export default function RoomCard({ room }) {
     const goToRoom = async (password) => {
 
         try {
+
+            const user = JSON.parse(localStorage.getItem("user") || "null");
 
             const response = await fetch(
                 `${API_BASE_URL}/api/rooms/join`,
@@ -24,7 +26,8 @@ export default function RoomCard({ room }) {
                     },
                     body: JSON.stringify({
                         roomId: room.id,
-                        password
+                        password,
+                        userId: user?.id
                     })
                 }
             );
@@ -59,6 +62,29 @@ export default function RoomCard({ room }) {
         goToRoom(passwordInput);
     };
 
+    const deleteRoom = async () => {
+        const ok = await confirm(`"${room.title}" 방을 삭제하시겠습니까?`);
+        if (!ok) return;
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/rooms/${room.id}`,
+                { method: "DELETE" }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+                onDeleted && onDeleted();
+            } else {
+                await alert(data.message || "삭제 실패");
+            }
+        } catch (err) {
+            console.log(err);
+            await alert("서버 연결 실패");
+        }
+    };
+
     return (
         <>
             <div className="room-card">
@@ -77,20 +103,31 @@ export default function RoomCard({ room }) {
                             : "🌐 공개방"}
                     </p>
 
-                    <p>
-                        📅 {room.created_at
-                            ? new Date(room.created_at).toLocaleString("ko-KR")
-                            : "-"}
-                    </p>
-
                 </div>
 
-                <button
-                    className="join-btn"
-                    onClick={joinRoom}
-                >
-                    🚪 입장
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <button
+                        className="join-btn"
+                        onClick={joinRoom}
+                    >
+                        🚪 입장
+                    </button>
+
+                    <button
+                        onClick={deleteRoom}
+                        style={{
+                            border: "none",
+                            background: "#fee2e2",
+                            color: "#ef4444",
+                            borderRadius: 10,
+                            padding: "8px 0",
+                            cursor: "pointer",
+                            fontSize: 13,
+                        }}
+                    >
+                        🗑 삭제
+                    </button>
+                </div>
 
             </div>
 

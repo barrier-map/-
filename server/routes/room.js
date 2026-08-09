@@ -220,4 +220,37 @@ router.get("/joined/:userId", async (req, res) => {
 });
 
 
+// ======================
+// 방 삭제 (임시 : 지금은 누구나 삭제 가능, 나중에 방장만 가능하도록 제한 예정)
+// DELETE /api/rooms/:id
+// ======================
+
+router.delete("/:id", async (req, res) => {
+
+    const { id } = req.params;
+
+    try {
+        await db.execute({
+            sql: "DELETE FROM rooms WHERE id=?",
+            args: [id],
+        });
+
+        await db.execute({
+            sql: "DELETE FROM room_visits WHERE room_id=?",
+            args: [id],
+        });
+
+        res.json({ success: true });
+
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "방 삭제 실패"
+        });
+    }
+
+});
+
+
 module.exports = router;

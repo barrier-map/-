@@ -145,6 +145,7 @@ export default function StudyRoom() {
               <RoomCard
                 key={room.id}
                 room={room}
+                onDeleted={loadRooms}
               />
             ))
 
