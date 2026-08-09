@@ -91,6 +91,7 @@ router.get("/", async (req, res) => {
             SELECT
                 id,
                 title,
+                owner_id,
                 max_users,
                 created_at,
                 CASE
@@ -106,6 +107,7 @@ router.get("/", async (req, res) => {
             result.rows.map((row) => ({
                 ...row,
                 id: Number(row.id),
+                owner_id: row.owner_id ? Number(row.owner_id) : null,
                 max_users: Number(row.max_users),
                 hasPassword: Number(row.hasPassword),
             }))
@@ -221,15 +223,125 @@ router.get("/joined/:userId", async (req, res) => {
 
 
 // ======================
-// 방 삭제 (임시 : 지금은 누구나 삭제 가능, 나중에 방장만 가능하도록 제한 예정)
+// 방 상세 정보 (방장 확인용)
+// GET /api/rooms/:id
+// ======================
+
+router.get("/:id", async (req, res) => {
+
+    const { id } = req.params;
+
+    try {
+        const result = await db.execute({
+            sql: "SELECT id, title, owner_id, max_users FROM rooms WHERE id=?",
+            args: [id],
+        });
+
+        const room = result.rows[0];
+
+        if (!room) {
+            return res.json({
+                success: false,
+                message: "방이 존재하지 않습니다."
+            });
+        }
+
+        res.json({
+            success: true,
+            room: {
+                id: Number(room.id),
+                title: room.title,
+                owner_id: room.owner_id ? Number(room.owner_id) : null,
+                max_users: Number(room.max_users),
+            },
+        });
+
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "DB 오류"
+        });
+    }
+
+});
+
+
+// ======================
+// 방 채팅 기록 불러오기
+// GET /api/rooms/:id/messages
+// ======================
+
+router.get("/:id/messages", async (req, res) => {
+
+    const { id } = req.params;
+
+    try {
+        const result = await db.execute({
+            sql: `
+                SELECT username, message, created_at
+                FROM chat_messages
+                WHERE room_id=?
+                ORDER BY id ASC
+            `,
+            args: [id],
+        });
+
+        res.json({
+            success: true,
+            messages: result.rows.map((row) => ({
+                user: row.username,
+                message: row.message,
+                time: new Date(row.created_at).toLocaleTimeString("ko-KR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                }),
+            })),
+        });
+
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "DB 오류"
+        });
+    }
+
+});
+
+
+// ======================
+// 방 삭제 (방장만 가능)
 // DELETE /api/rooms/:id
 // ======================
 
 router.delete("/:id", async (req, res) => {
 
     const { id } = req.params;
+    const { userId } = req.body;
 
     try {
+        const result = await db.execute({
+            sql: "SELECT owner_id FROM rooms WHERE id=?",
+            args: [id],
+        });
+
+        const room = result.rows[0];
+
+        if (!room) {
+            return res.json({
+                success: false,
+                message: "방이 존재하지 않습니다."
+            });
+        }
+
+        if (Number(room.owner_id) !== Number(userId)) {
+            return res.json({
+                success: false,
+                message: "방장만 삭제할 수 있습니다."
+            });
+        }
+
         await db.execute({
             sql: "DELETE FROM rooms WHERE id=?",
             args: [id],

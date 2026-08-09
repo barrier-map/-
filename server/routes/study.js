@@ -5,6 +5,45 @@ const router = express.Router();
 
 
 // ======================
+// 출석 날짜 목록
+// GET /api/study/attendance/:userId
+//
+// ★ 통계 화면이 원래 이 주소로 요청을 보내고 있었는데
+//   서버에 이 부분이 없어서 출석이 항상 0일로 보였습니다.
+//   (더 자세한 통계는 /api/stats/:userId 쪽을 쓰세요)
+// ======================
+
+router.get("/attendance/:userId", async (req, res) => {
+
+    const { userId } = req.params;
+
+    try {
+        const result = await db.execute({
+            sql: "SELECT date, seconds FROM attendance WHERE user_id=? ORDER BY date ASC",
+            args: [userId],
+        });
+
+        res.json({
+            success: true,
+            dates: result.rows.map((row) => row.date),
+            records: result.rows.map((row) => ({
+                date: row.date,
+                seconds: Number(row.seconds || 0),
+            })),
+        });
+
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "DB 오류"
+        });
+    }
+
+});
+
+
+// ======================
 // 공부메모 불러오기
 // GET /api/study/memo/:userId
 // ======================

@@ -8,6 +8,9 @@ export default function RoomCard({ room, onDeleted }) {
     const navigate = useNavigate();
     const { alert, confirm } = useAlert();
 
+    const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+    const isOwner = currentUser && room.owner_id === currentUser.id;
+
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordInput, setPasswordInput] = useState("");
 
@@ -69,7 +72,11 @@ export default function RoomCard({ room, onDeleted }) {
         try {
             const response = await fetch(
                 `${API_BASE_URL}/api/rooms/${room.id}`,
-                { method: "DELETE" }
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: currentUser?.id }),
+                }
             );
 
             const data = await response.json();
@@ -101,6 +108,7 @@ export default function RoomCard({ room, onDeleted }) {
                         {room.hasPassword
                             ? "🔒 비밀번호 방"
                             : "🌐 공개방"}
+                        {isOwner && " · 👑 내가 만든 방"}
                     </p>
 
                 </div>
@@ -113,20 +121,22 @@ export default function RoomCard({ room, onDeleted }) {
                         🚪 입장
                     </button>
 
-                    <button
-                        onClick={deleteRoom}
-                        style={{
-                            border: "none",
-                            background: "#fee2e2",
-                            color: "#ef4444",
-                            borderRadius: 10,
-                            padding: "8px 0",
-                            cursor: "pointer",
-                            fontSize: 13,
-                        }}
-                    >
-                        🗑 삭제
-                    </button>
+                    {isOwner && (
+                        <button
+                            onClick={deleteRoom}
+                            style={{
+                                border: "none",
+                                background: "#fee2e2",
+                                color: "#ef4444",
+                                borderRadius: 10,
+                                padding: "8px 0",
+                                cursor: "pointer",
+                                fontSize: 13,
+                            }}
+                        >
+                            🗑 삭제
+                        </button>
+                    )}
                 </div>
 
             </div>

@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import StudyRoom from "./pages/StudyRoom";
 import Study from "./pages/Study";
 import Statistics from "./pages/Statistics";
+import CalendarPage from "./pages/Calendar";
 import FloatingRoomWidget from "./components/FloatingRoomWidget";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/room/:id" element={<Room />} />
         <Route path="/study" element={<Study />} />
         <Route path="/statistics" element={<Statistics />} />
+        <Route path="/calendar" element={<CalendarPage />} />
       </Routes>
 
       <FloatingRoomWidget />

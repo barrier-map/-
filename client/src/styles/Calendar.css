@@ -1,0 +1,109 @@
+.calendar-page {
+  margin-left: 250px;
+  padding: 40px;
+  max-width: 800px;
+}
+
+.calendar-page h1 {
+  margin: 0;
+}
+
+.calendar-sub {
+  color: #888;
+  margin-top: 8px;
+  margin-bottom: 25px;
+}
+
+.calendar-add-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.calendar-add-box input[type="text"] {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+}
+
+.calendar-add-box input[type="date"] {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+}
+
+.calendar-add-box button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #6d5dfc;
+  color: white;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.calendar-section-title {
+  font-size: 17px;
+  margin: 25px 0 12px;
+  color: #333;
+}
+
+.calendar-empty {
+  color: #999;
+}
+
+.dday-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dday-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: white;
+  border-radius: 14px;
+  padding: 16px 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.dday-card.past {
+  opacity: 0.55;
+}
+
+.dday-badge {
+  background: #ece9ff;
+  color: #6d5dfc;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  min-width: 60px;
+  text-align: center;
+}
+
+.dday-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.dday-info span {
+  color: #999;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.dday-card button {
+  border: none;
+  background: #fee2e2;
+  color: #ef4444;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+}

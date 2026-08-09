@@ -26,10 +26,13 @@ export default function Room() {
 
   const {
     roomId,
+    roomTitle,
+    ownerId,
     peers,
     micOn,
     camOn,
     messages,
+    kicked,
     attachVideoRef,
     joinRoom,
     leaveRoom,
@@ -38,7 +41,10 @@ export default function Room() {
     sendMessage,
     getFrames,
     clearFrames,
+    kickUser,
   } = useRoom();
+
+  const isOwner = ownerId && user?.id === ownerId;
 
   const {
     mode: pomodoroMode,
@@ -52,11 +58,18 @@ export default function Room() {
   // 이 방에 아직 연결되어 있지 않다면 연결함
   // (다른 페이지 갔다가 같은 방으로 돌아온 경우엔 이미 연결되어 있으니 다시 안 함)
   useEffect(() => {
-    if (roomId !== id) {
+    if (roomId !== id && !kicked) {
       joinRoom(id, myUsername, user?.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // 방장에게 강퇴당했다면 방 목록으로 돌려보냄
+  useEffect(() => {
+    if (kicked) {
+      navigate("/studyroom");
+    }
+  }, [kicked, navigate]);
 
   const handleSend = () => {
     if (!message.trim()) return;
@@ -86,8 +99,11 @@ export default function Room() {
       <div className="room-page">
         <div className="room-header">
           <div>
-            <h1>📹 캠스터디 방</h1>
-            <p>방 번호 : {id}</p>
+            <h1>📹 {roomTitle || "캠스터디 방"}</h1>
+            <p>
+              방 번호 : {id}
+              {isOwner && " · 👑 내가 방장이에요"}
+            </p>
           </div>
 
           <button className="leave-btn" onClick={handleLeave}>
@@ -110,18 +126,41 @@ export default function Room() {
                 }}
               />
               <div className="video-overlay">
-                <span>{myUsername} (나)</span>
+                <span>{myUsername} (나){isOwner && " 👑"}</span>
                 <span>{micOn ? "🎤" : "🔇"}</span>
               </div>
             </div>
 
-            {peers.map(({ peerId, username, micOn: peerMicOn, remoteStream }) => (
+            {peers.map(({ peerId, username, userId: peerUserId, micOn: peerMicOn, remoteStream }) => (
               <div className="video-card" key={peerId}>
                 <PeerVideo stream={remoteStream} />
                 <div className="video-overlay">
-                  <span>{username}</span>
+                  <span>
+                    {username}
+                    {ownerId && peerUserId === ownerId && " 👑"}
+                  </span>
                   <span>{peerMicOn ? "🎤" : "🔇"}</span>
                 </div>
+
+                {isOwner && (
+                  <button
+                    onClick={() => kickUser(peerId)}
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      border: "none",
+                      background: "rgba(239,68,68,.85)",
+                      color: "white",
+                      borderRadius: 8,
+                      padding: "4px 8px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    내보내기
+                  </button>
+                )}
               </div>
             ))}
           </div>

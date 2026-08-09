@@ -8,6 +8,7 @@ import {
 import Peer from "simple-peer";
 import socket from "../socket";
 import { useAlert } from "./AlertContext";
+import { API_BASE_URL } from "../config";
 
 const RoomContext = createContext(null);
 
@@ -19,15 +20,19 @@ export function RoomProvider({ children }) {
   const { alert } = useAlert();
 
   const [roomId, setRoomId] = useState(null);
-  const [peers, setPeers] = useState([]); // [{ peerId, peer, username, micOn, remoteStream }]
+  const [roomTitle, setRoomTitle] = useState("");
+  const [ownerId, setOwnerId] = useState(null);
+  const [peers, setPeers] = useState([]); // [{ peerId, peer, username, userId, micOn, remoteStream }]
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [messages, setMessages] = useState([]);
+  const [kicked, setKicked] = useState(false);
 
   const myStream = useRef(null);
   const myVideoEl = useRef(null); // 현재 화면에 붙어있는 <video> DOM
   const peersRef = useRef([]);
   const roomIdRef = useRef(null);
+  const myUserIdRef = useRef(null);
 
   const framesRef = useRef([]);
   const captureTimerRef = useRef(null);
@@ -94,8 +99,15 @@ export function RoomProvider({ children }) {
     return peer;
   }
 
-  function addPeer(peerId, peer, username) {
-    const entry = { peerId, peer, username: username || "익명", micOn: true, remoteStream: null };
+  function addPeer(peerId, peer, username, userId) {
+    const entry = {
+      peerId,
+      peer,
+      username: username || "익명",
+      userId: userId || null,
+      micOn: true,
+      remoteStream: null,
+    };
     peersRef.current = [...peersRef.current, entry];
     setPeers((prev) => [...prev, entry]);
   }
@@ -114,14 +126,14 @@ export function RoomProvider({ children }) {
       if (!myStream.current) return;
       users.forEach((user) => {
         const peer = createPeer(user.id, myStream.current, true);
-        addPeer(user.id, peer, user.username);
+        addPeer(user.id, peer, user.username, user.userId);
       });
     });
 
     socket.on("user-joined", (user) => {
       if (!myStream.current) return;
       const peer = createPeer(user.id, myStream.current, false);
-      addPeer(user.id, peer, user.username);
+      addPeer(user.id, peer, user.username, user.userId);
     });
 
     socket.on("signal", ({ sender, signal }) => {
@@ -148,6 +160,12 @@ export function RoomProvider({ children }) {
       setMessages((prev) => [...prev, data]);
     });
 
+    socket.on("kicked", () => {
+      setKicked(true);
+      alert("방장에 의해 방에서 내보내졌습니다.");
+      leaveRoom();
+    });
+
     return () => {
       socket.off("existing-users");
       socket.off("user-joined");
@@ -155,6 +173,7 @@ export function RoomProvider({ children }) {
       socket.off("mic-status");
       socket.off("user-left");
       socket.off("receive-message");
+      socket.off("kicked");
     };
   }, []);
 
@@ -174,6 +193,7 @@ export function RoomProvider({ children }) {
       });
 
       myStream.current = stream;
+      myUserIdRef.current = userId;
 
       if (myVideoEl.current) {
         myVideoEl.current.srcObject = stream;
@@ -181,12 +201,32 @@ export function RoomProvider({ children }) {
 
       setMicOn(true);
       setCamOn(true);
+      setKicked(false);
       framesRef.current = [];
       startCapturing();
 
       roomIdRef.current = newRoomId;
       setRoomId(newRoomId);
-      setMessages([]);
+
+      // 방 정보(방장 확인용) + 채팅 기록 불러오기
+      fetch(`${API_BASE_URL}/api/rooms/${newRoomId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setRoomTitle(data.room.title);
+            setOwnerId(data.room.owner_id);
+          }
+        })
+        .catch((err) => console.error(err));
+
+      fetch(`${API_BASE_URL}/api/rooms/${newRoomId}/messages`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setMessages(data.messages);
+          }
+        })
+        .catch((err) => console.error(err));
 
       socket.connect();
       socket.emit("join-room", { roomId: newRoomId, username, userId });
@@ -212,7 +252,15 @@ export function RoomProvider({ children }) {
 
     roomIdRef.current = null;
     setRoomId(null);
+    setRoomTitle("");
+    setOwnerId(null);
     setMessages([]);
+  };
+
+  // 방장이 다른 참가자를 내보냄
+  const kickUser = (targetSocketId) => {
+    if (!roomIdRef.current) return;
+    socket.emit("kick-user", { roomId: roomIdRef.current, targetSocketId });
   };
 
   const toggleCamera = () => {
@@ -251,7 +299,6 @@ export function RoomProvider({ children }) {
     };
 
     socket.emit("send-message", data);
-    setMessages((prev) => [...prev, data]);
   };
 
   const getFrames = () => framesRef.current;
@@ -263,10 +310,13 @@ export function RoomProvider({ children }) {
     <RoomContext.Provider
       value={{
         roomId,
+        roomTitle,
+        ownerId,
         peers,
         micOn,
         camOn,
         messages,
+        kicked,
         attachVideoRef,
         joinRoom,
         leaveRoom,
@@ -275,6 +325,7 @@ export function RoomProvider({ children }) {
         sendMessage,
         getFrames,
         clearFrames,
+        kickUser,
       }}
     >
       {children}
