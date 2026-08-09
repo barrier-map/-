@@ -106,12 +106,12 @@ export default function StudyRoom() {
         </div>
 
         <input
-          type="text"
+          type="search"
           placeholder="🔍 방 이름으로 검색"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoComplete="off"
-          name="room-search"
+          name="darakbang-room-search-box"
           style={{
             width: "100%",
             padding: "12px 16px",

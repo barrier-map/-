@@ -142,6 +142,7 @@ export default function RoomCard({ room, onDeleted }) {
                             placeholder="비밀번호를 입력하세요"
                             value={passwordInput}
                             autoFocus
+                            autoComplete="new-password"
                             onChange={(e) => setPasswordInput(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") submitPassword();

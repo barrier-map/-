@@ -77,6 +77,7 @@ export default function CreateRoomModal({
           placeholder="비밀번호(선택)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
         />
 
         <label className="modal-label">최대 인원 (2~12명)</label>
