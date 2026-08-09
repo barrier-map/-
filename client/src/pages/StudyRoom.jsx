@@ -110,6 +110,8 @@ export default function StudyRoom() {
           placeholder="🔍 방 이름으로 검색"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          autoComplete="off"
+          name="room-search"
           style={{
             width: "100%",
             padding: "12px 16px",
