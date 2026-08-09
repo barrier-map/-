@@ -14,6 +14,167 @@
   margin-bottom: 25px;
 }
 
+/* ===========================
+   요약 카드 3개
+=========================== */
+
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.summary-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.summary-label {
+  margin: 0;
+  font-size: 13px;
+  color: #999;
+}
+
+.summary-value {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* ===========================
+   오늘 목표 카드
+=========================== */
+
+.today-card {
+  background: white;
+  border-radius: 18px;
+  padding: 24px 28px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  margin-bottom: 25px;
+}
+
+.today-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.today-label {
+  margin: 0;
+  font-size: 13px;
+  color: #999;
+}
+
+.today-value {
+  margin: 4px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #6d5dfc;
+}
+
+.today-target {
+  font-size: 15px;
+  font-weight: 400;
+  color: #aaa;
+}
+
+.target-edit-btn {
+  border: none;
+  background: #f0f0f5;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+}
+
+.target-edit-btn:hover {
+  background: #e6e6ee;
+}
+
+.target-edit-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.target-edit-box input {
+  width: 80px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+  text-align: right;
+}
+
+.target-unit {
+  color: #777;
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+.target-save-btn {
+  border: none;
+  background: #6d5dfc;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.target-cancel-btn {
+  border: none;
+  background: #eee;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.today-track {
+  height: 16px;
+  background: #f0f0f5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.today-fill {
+  height: 100%;
+  background: #6d5dfc;
+  border-radius: 10px;
+  transition: width 0.4s;
+}
+
+.today-fill.done {
+  background: #22c55e;
+}
+
+.today-percent {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #777;
+}
+
+/* ===========================
+   탭
+=========================== */
+
 .stat-tabs {
   display: flex;
   gap: 10px;
@@ -40,6 +201,15 @@
   padding: 30px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
 }
+
+.stat-card h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+/* ===========================
+   달력 (일별)
+=========================== */
 
 .calendar-header {
   display: flex;
@@ -73,7 +243,7 @@
 
 .month-summary strong {
   color: #6d5dfc;
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .calendar-grid {
@@ -99,14 +269,22 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  font-size: 14px;
   background: #f7f7fb;
   color: #333;
-  gap: 4px;
+  gap: 3px;
 }
 
 .day-cell.empty {
   background: transparent;
+}
+
+.day-number {
+  font-size: 14px;
+}
+
+.day-time {
+  font-size: 11px;
+  opacity: 0.85;
 }
 
 .day-cell.today {
@@ -119,12 +297,42 @@
   font-weight: 600;
 }
 
-.day-cell .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+/* 목표를 채운 날은 더 진하게 */
+.day-cell.goal-met {
   background: #6d5dfc;
+  color: white;
 }
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: #888;
+}
+
+.legend-chip {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.legend-chip.attended {
+  background: #ece9ff;
+  margin-left: 4px;
+}
+
+.legend-chip.goal-met {
+  background: #6d5dfc;
+  margin-left: 14px;
+}
+
+/* ===========================
+   막대 그래프 (주별 / 월별)
+=========================== */
 
 .bar-list {
   display: flex;
@@ -162,9 +370,37 @@
 }
 
 .bar-count {
-  width: 40px;
+  width: 110px;
   text-align: right;
   font-size: 14px;
   color: #333;
   flex-shrink: 0;
+}
+
+.bar-count em {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+/* ===========================
+   좁은 화면
+=========================== */
+
+@media (max-width: 800px) {
+  .summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-label {
+    width: 100px;
+    font-size: 13px;
+  }
+
+  .bar-count {
+    width: 80px;
+    font-size: 13px;
+  }
 }
