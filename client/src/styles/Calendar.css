@@ -1,7 +1,7 @@
 .calendar-page {
   margin-left: 250px;
   padding: 40px;
-  max-width: 800px;
+  max-width: 1150px;
 }
 
 .calendar-page h1 {
@@ -14,96 +14,303 @@
   margin-bottom: 25px;
 }
 
-.calendar-add-box {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
+/* ===========================
+   전체 배치 (달력 + 오른쪽 패널)
+=========================== */
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
 }
 
-.calendar-add-box input[type="text"] {
-  flex: 1;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-size: 15px;
+/* ===========================
+   달력
+=========================== */
+
+.calendar-box {
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
 }
 
-.calendar-add-box input[type="date"] {
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-size: 15px;
-}
-
-.calendar-add-box button {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 12px;
-  background: #6d5dfc;
-  color: white;
-  cursor: pointer;
-  font-size: 15px;
-}
-
-.calendar-section-title {
-  font-size: 17px;
-  margin: 25px 0 12px;
-  color: #333;
-}
-
-.calendar-empty {
-  color: #999;
-}
-
-.dday-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.dday-card {
+.cal-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: white;
-  border-radius: 14px;
-  padding: 16px 20px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
-.dday-card.past {
-  opacity: 0.55;
-}
-
-.dday-badge {
-  background: #ece9ff;
-  color: #6d5dfc;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  min-width: 60px;
+.cal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  min-width: 130px;
   text-align: center;
 }
 
-.dday-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.cal-nav {
+  border: none;
+  background: #f0f0f5;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
 }
 
-.dday-info span {
-  color: #999;
+.cal-nav:hover {
+  background: #e4e4ee;
+}
+
+.cal-today-btn {
+  margin-left: auto;
+  border: none;
+  background: #ece9ff;
+  color: #6d5dfc;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal-weekdays {
+  margin-bottom: 8px;
+}
+
+.cal-weekday {
+  text-align: center;
   font-size: 13px;
+  color: #999;
+  padding-bottom: 4px;
+}
+
+.cal-weekday.sun {
+  color: #ef4444;
+}
+
+.cal-weekday.sat {
+  color: #3b82f6;
+}
+
+.cal-cell {
+  min-height: 92px;
+  border-radius: 12px;
+  background: #f8f8fc;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background 0.15s;
+  overflow: hidden;
+}
+
+.cal-cell:hover {
+  background: #f0eefe;
+}
+
+.cal-cell.empty {
+  background: transparent;
+  cursor: default;
+}
+
+.cal-cell.empty:hover {
+  background: transparent;
+}
+
+.cal-cell.today .cal-day {
+  background: #6d5dfc;
+  color: white;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-cell.selected {
+  outline: 2px solid #6d5dfc;
+  background: #f3f1ff;
+}
+
+.cal-day {
+  font-size: 13px;
+  color: #444;
+  font-weight: 600;
+}
+
+.cal-day.sun {
+  color: #ef4444;
+}
+
+.cal-day.sat {
+  color: #3b82f6;
+}
+
+.cal-events {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cal-chip {
+  background: #ece9ff;
+  color: #5b4bd6;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-more {
+  font-size: 11px;
+  color: #999;
+  padding-left: 4px;
+}
+
+/* ===========================
+   오른쪽 패널
+=========================== */
+
+.calendar-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.side-box {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.side-box h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  color: #333;
+}
+
+.side-empty {
+  color: #aaa;
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+.side-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.side-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8f8fc;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.side-event.clickable {
+  cursor: pointer;
+}
+
+.side-event.clickable:hover {
+  background: #f0eefe;
+}
+
+.side-badge {
+  background: #ece9ff;
+  color: #6d5dfc;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+}
+
+.side-title {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.side-title em {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  color: #aaa;
   margin-top: 2px;
 }
 
-.dday-card button {
+.side-event button {
   border: none;
-  background: #fee2e2;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.side-event button:hover {
   color: #ef4444;
-  padding: 8px 14px;
+}
+
+.side-add {
+  display: flex;
+  gap: 8px;
+}
+
+.side-add input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.side-add button {
+  border: none;
+  background: #6d5dfc;
+  color: white;
+  padding: 11px 16px;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ===========================
+   좁은 화면
+=========================== */
+
+@media (max-width: 1000px) {
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cal-cell {
+    min-height: 70px;
+  }
 }

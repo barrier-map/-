@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
@@ -6,11 +6,18 @@ import { useAlert } from "../context/AlertContext";
 import { API_BASE_URL } from "../config";
 import "../styles/Calendar.css";
 
+const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+function pad(n) {
+  return String(n).padStart(2, "0");
+}
+
+function toDateString(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function todayString() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
+  return toDateString(new Date());
 }
 
 // 오늘부터 그 날짜까지 며칠 남았는지 계산 (D-day)
@@ -31,7 +38,11 @@ export default function CalendarPage() {
 
   const [events, setEvents] = useState([]);
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState(todayString());
+
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0~11
+  const [selectedDate, setSelectedDate] = useState(todayString());
 
   const loadEvents = () => {
     if (!userId) return;
@@ -46,27 +57,106 @@ export default function CalendarPage() {
 
   useEffect(() => {
     loadEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // 날짜별로 일정을 묶어둠 (달력 칸에 빠르게 꽂아 넣기 위해)
+  const eventsByDate = useMemo(() => {
+    const map = new Map();
+
+    events.forEach((e) => {
+      if (!map.has(e.date)) map.set(e.date, []);
+      map.get(e.date).push(e);
+    });
+
+    return map;
+  }, [events]);
+
+  // ================= 달력 칸 만들기 =================
+  const calendarCells = useMemo(() => {
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+    // 일요일 시작 기준 앞쪽 빈 칸
+    const firstWeekday = firstDay.getDay();
+
+    const cells = [];
+
+    for (let i = 0; i < firstWeekday; i++) {
+      cells.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
+      const weekday = new Date(viewYear, viewMonth, day).getDay();
+
+      cells.push({
+        day,
+        dateStr,
+        weekday,
+        events: eventsByDate.get(dateStr) || [],
+        isToday: dateStr === todayString(),
+      });
+    }
+
+    // 마지막 줄 빈 칸 채우기 (격자 모양이 흐트러지지 않게)
+    while (cells.length % 7 !== 0) {
+      cells.push(null);
+    }
+
+    return cells;
+  }, [viewYear, viewMonth, eventsByDate]);
+
+  const goPrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewYear((y) => y - 1);
+      setViewMonth(11);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const goNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewYear((y) => y + 1);
+      setViewMonth(0);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+
+  const goToday = () => {
+    const now = new Date();
+    setViewYear(now.getFullYear());
+    setViewMonth(now.getMonth());
+    setSelectedDate(todayString());
+  };
+
+  // ================= 일정 추가 / 삭제 =================
   const addEvent = async () => {
     if (!title.trim()) {
       await alert("일정 이름을 입력해주세요.");
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/calendar`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, title, date }),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/calendar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, title, date: selectedDate }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.success) {
-      setTitle("");
-      loadEvents();
-    } else {
-      await alert(data.message);
+      if (data.success) {
+        setTitle("");
+        loadEvents();
+      } else {
+        await alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      await alert("서버 연결에 실패했습니다.");
     }
   };
 
@@ -78,11 +168,21 @@ export default function CalendarPage() {
     loadEvents();
   };
 
-  // 지난 일정과 다가올 일정을 나눠서 보여줌
-  const upcoming = events.filter((e) => e.date >= todayString());
-  const past = events
-    .filter((e) => e.date < todayString())
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  const selectedEvents = eventsByDate.get(selectedDate) || [];
+
+  // 다가오는 일정 (가까운 순서로 최대 5개)
+  const upcoming = events
+    .filter((e) => e.date >= todayString())
+    .sort((a, b) => (a.date > b.date ? 1 : -1))
+    .slice(0, 5);
+
+  // 선택한 날짜를 "8월 15일 (금)" 처럼 보기 좋게
+  const selectedLabel = useMemo(() => {
+    const d = new Date(selectedDate + "T00:00:00");
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 (${
+      WEEKDAY_LABELS[d.getDay()]
+    })`;
+  }, [selectedDate]);
 
   return (
     <>
@@ -91,67 +191,152 @@ export default function CalendarPage() {
       <div className="calendar-page">
         <h1>📅 달력</h1>
         <p className="calendar-sub">
-          시험일, 발표일 같은 중요한 날짜를 등록하면 디데이가 표시돼요.
+          날짜를 눌러서 시험일, 발표일 같은 일정을 등록해보세요.
         </p>
 
-        <div className="calendar-add-box">
-          <input
-            type="text"
-            placeholder="일정 이름 (예: 중간고사)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+        <div className="calendar-layout">
+          {/* ================= 왼쪽 : 달력 ================= */}
+          <div className="calendar-box">
+            <div className="cal-header">
+              <button className="cal-nav" onClick={goPrevMonth}>
+                ‹
+              </button>
 
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
+              <h2>
+                {viewYear}년 {viewMonth + 1}월
+              </h2>
 
-          <button onClick={addEvent}>➕ 추가</button>
-        </div>
+              <button className="cal-nav" onClick={goNextMonth}>
+                ›
+              </button>
 
-        <h2 className="calendar-section-title">다가오는 일정</h2>
+              <button className="cal-today-btn" onClick={goToday}>
+                오늘
+              </button>
+            </div>
 
-        {upcoming.length === 0 ? (
-          <p className="calendar-empty">등록된 다가오는 일정이 없습니다.</p>
-        ) : (
-          <div className="dday-list">
-            {upcoming.map((e) => (
-              <div className="dday-card" key={e.id}>
-                <div className="dday-badge">{getDday(e.date)}</div>
-
-                <div className="dday-info">
-                  <strong>{e.title}</strong>
-                  <span>{e.date}</span>
-                </div>
-
-                <button onClick={() => deleteEvent(e.id)}>삭제</button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {past.length > 0 && (
-          <>
-            <h2 className="calendar-section-title">지난 일정</h2>
-
-            <div className="dday-list">
-              {past.map((e) => (
-                <div className="dday-card past" key={e.id}>
-                  <div className="dday-badge">{getDday(e.date)}</div>
-
-                  <div className="dday-info">
-                    <strong>{e.title}</strong>
-                    <span>{e.date}</span>
-                  </div>
-
-                  <button onClick={() => deleteEvent(e.id)}>삭제</button>
+            <div className="cal-grid cal-weekdays">
+              {WEEKDAY_LABELS.map((w, i) => (
+                <div
+                  key={w}
+                  className={
+                    "cal-weekday" +
+                    (i === 0 ? " sun" : "") +
+                    (i === 6 ? " sat" : "")
+                  }
+                >
+                  {w}
                 </div>
               ))}
             </div>
-          </>
-        )}
+
+            <div className="cal-grid">
+              {calendarCells.map((cell, idx) =>
+                cell ? (
+                  <div
+                    key={cell.dateStr}
+                    className={
+                      "cal-cell" +
+                      (cell.isToday ? " today" : "") +
+                      (cell.dateStr === selectedDate ? " selected" : "")
+                    }
+                    onClick={() => setSelectedDate(cell.dateStr)}
+                  >
+                    <span
+                      className={
+                        "cal-day" +
+                        (cell.weekday === 0 ? " sun" : "") +
+                        (cell.weekday === 6 ? " sat" : "")
+                      }
+                    >
+                      {cell.day}
+                    </span>
+
+                    <div className="cal-events">
+                      {cell.events.slice(0, 2).map((e) => (
+                        <span className="cal-chip" key={e.id} title={e.title}>
+                          {e.title}
+                        </span>
+                      ))}
+
+                      {cell.events.length > 2 && (
+                        <span className="cal-more">
+                          +{cell.events.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div key={`blank-${idx}`} className="cal-cell empty" />
+                )
+              )}
+            </div>
+          </div>
+
+          {/* ================= 오른쪽 : 선택한 날 + 디데이 ================= */}
+          <div className="calendar-side">
+            <div className="side-box">
+              <h3>{selectedLabel}</h3>
+
+              {selectedEvents.length === 0 ? (
+                <p className="side-empty">등록된 일정이 없어요.</p>
+              ) : (
+                <div className="side-event-list">
+                  {selectedEvents.map((e) => (
+                    <div className="side-event" key={e.id}>
+                      <span className="side-badge">{getDday(e.date)}</span>
+                      <span className="side-title">{e.title}</span>
+                      <button onClick={() => deleteEvent(e.id)}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="side-add">
+                <input
+                  type="text"
+                  placeholder="일정 이름 (예: 중간고사)"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addEvent();
+                  }}
+                />
+                <button onClick={addEvent}>추가</button>
+              </div>
+            </div>
+
+            <div className="side-box">
+              <h3>다가오는 디데이</h3>
+
+              {upcoming.length === 0 ? (
+                <p className="side-empty">다가오는 일정이 없어요.</p>
+              ) : (
+                <div className="side-event-list">
+                  {upcoming.map((e) => (
+                    <div
+                      className="side-event clickable"
+                      key={e.id}
+                      onClick={() => {
+                        const d = new Date(e.date + "T00:00:00");
+                        setViewYear(d.getFullYear());
+                        setViewMonth(d.getMonth());
+                        setSelectedDate(e.date);
+                      }}
+                    >
+                      <span className="side-badge">{getDday(e.date)}</span>
+
+                      <span className="side-title">
+                        {e.title}
+                        <em>{e.date}</em>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
