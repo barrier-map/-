@@ -15,11 +15,25 @@ const app = express();
 const server = http.createServer(app);
 
 // ==========================
+// 실시간 통신(Socket.IO)을 허용할 프론트엔드 주소 목록
+//
+// - 로컬에서 테스트할 때 쓰는 주소
+// - 실제 배포된 Vercel 주소 (항상 허용되도록 직접 적어둠)
+// - Render 환경변수 CLIENT_URL 에 다른 주소를 넣으면 그것도 추가로 허용됨
+//   (주소를 바꾸게 되면 Render > Environment 에서 CLIENT_URL 값만 바꿔주면 됨)
+// ==========================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://eight-eta-49.vercel.app",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+// ==========================
 // Socket.IO
 // ==========================
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });
@@ -27,7 +41,7 @@ const io = new Server(server, {
 // ==========================
 // 기본 설정
 // ==========================
-app.use(cors());
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 // ==========================
