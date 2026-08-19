@@ -15,25 +15,11 @@ const app = express();
 const server = http.createServer(app);
 
 // ==========================
-// 실시간 통신(Socket.IO)을 허용할 프론트엔드 주소 목록
-//
-// - 로컬에서 테스트할 때 쓰는 주소
-// - 실제 배포된 Vercel 주소 (항상 허용되도록 직접 적어둠)
-// - Render 환경변수 CLIENT_URL 에 다른 주소를 넣으면 그것도 추가로 허용됨
-//   (주소를 바꾸게 되면 Render > Environment 에서 CLIENT_URL 값만 바꿔주면 됨)
-// ==========================
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://eight-eta-49.vercel.app",
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
-// ==========================
 // Socket.IO
 // ==========================
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     methods: ["GET", "POST"],
   },
 });
@@ -41,7 +27,7 @@ const io = new Server(server, {
 // ==========================
 // 기본 설정
 // ==========================
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors());
 app.use(express.json());
 
 // ==========================
@@ -254,8 +240,25 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", ({ roomId, username, userId }) => {
 
+    const finalUsername = username || "익명";
+
+    // ==========================
+    // 닉네임 중복 방지
+    // 같은 방 안에 이미 똑같은 닉네임을 쓰는 "다른" 사람이 있으면 입장을 막음
+    // (같은 계정이 새로고침 등으로 다시 들어오는 경우는 예외로 허용)
+    // ==========================
+    const existingUsers = rooms[roomId] || [];
+    const nameTaken = existingUsers.some(
+      (p) => p.username === finalUsername && p.userId !== userId
+    );
+
+    if (nameTaken) {
+      socket.emit("join-rejected", { reason: "duplicate-username" });
+      return;
+    }
+
     socket.roomId = roomId;
-    socket.username = username || "익명";
+    socket.username = finalUsername;
     socket.userId = userId;
 
     // 출석 기록 (하루 1번만 기록됨, 실패해도 방 입장에는 영향 없음)

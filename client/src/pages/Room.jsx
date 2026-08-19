@@ -33,6 +33,8 @@ export default function Room() {
     camOn,
     messages,
     kicked,
+    duplicateName,
+    resetDuplicateName,
     attachVideoRef,
     joinRoom,
     leaveRoom,
@@ -70,6 +72,14 @@ export default function Room() {
       navigate("/studyroom");
     }
   }, [kicked, navigate]);
+
+  // 닉네임이 중복되어 입장이 거부되었다면 방 목록으로 돌려보냄
+  useEffect(() => {
+    if (duplicateName) {
+      resetDuplicateName();
+      navigate("/studyroom");
+    }
+  }, [duplicateName, resetDuplicateName, navigate]);
 
   const handleSend = () => {
     if (!message.trim()) return;

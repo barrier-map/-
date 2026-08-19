@@ -55,6 +55,7 @@ export function RoomProvider({ children }) {
   const [camOn, setCamOn] = useState(true);
   const [messages, setMessages] = useState([]);
   const [kicked, setKicked] = useState(false);
+  const [duplicateName, setDuplicateName] = useState(false);
 
   const myStream = useRef(null);
   const myVideoEl = useRef(null); // 현재 화면에 붙어있는 <video> DOM
@@ -277,6 +278,14 @@ export function RoomProvider({ children }) {
       leaveRoom();
     });
 
+    socket.on("join-rejected", ({ reason }) => {
+      if (reason === "duplicate-username") {
+        alert("이미 같은 닉네임을 쓰는 사람이 방에 있습니다.\n설정에서 닉네임을 바꾼 뒤 다시 시도해주세요.");
+      }
+      setDuplicateName(true);
+      leaveRoom();
+    });
+
     socket.on("connect_error", (err) => {
       console.error("[캠] 서버 연결 실패:", err.message);
     });
@@ -289,6 +298,7 @@ export function RoomProvider({ children }) {
       socket.off("user-left");
       socket.off("receive-message");
       socket.off("kicked");
+      socket.off("join-rejected");
       socket.off("connect_error");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -436,6 +446,8 @@ export function RoomProvider({ children }) {
     framesRef.current = [];
   };
 
+  const resetDuplicateName = () => setDuplicateName(false);
+
   return (
     <RoomContext.Provider
       value={{
@@ -447,6 +459,8 @@ export function RoomProvider({ children }) {
         camOn,
         messages,
         kicked,
+        duplicateName,
+        resetDuplicateName,
         attachVideoRef,
         joinRoom,
         leaveRoom,
