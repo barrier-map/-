@@ -63,9 +63,10 @@ router.get("/:userId", async (req, res) => {
     try {
         const result = await db.execute({
             sql: `
-                SELECT date, seconds
+                SELECT date, SUM(seconds) as seconds
                 FROM attendance
                 WHERE user_id = ?
+                GROUP BY date
                 ORDER BY date ASC
             `,
             args: [userId],

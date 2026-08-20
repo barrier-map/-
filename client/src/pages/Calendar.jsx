@@ -8,6 +8,18 @@ import "../styles/Calendar.css";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
+// 일정 색상으로 고를 수 있는 목록 (서버 쪽 목록과 똑같이 맞춰둠)
+const COLOR_PALETTE = [
+  "#4f46e5",
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#06b6d4",
+  "#3b82f6",
+  "#ec4899",
+];
+
 function pad(n) {
   return String(n).padStart(2, "0");
 }
@@ -38,6 +50,7 @@ export default function CalendarPage() {
 
   const [events, setEvents] = useState([]);
   const [title, setTitle] = useState("");
+  const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0]);
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -143,13 +156,14 @@ export default function CalendarPage() {
       const response = await fetch(`${API_BASE_URL}/api/calendar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, title, date: selectedDate }),
+        body: JSON.stringify({ userId, title, date: selectedDate, color: selectedColor }),
       });
 
       const data = await response.json();
 
       if (data.success) {
         setTitle("");
+        setSelectedColor(COLOR_PALETTE[0]);
         loadEvents();
       } else {
         await alert(data.message);
@@ -253,15 +267,20 @@ export default function CalendarPage() {
                     </span>
 
                     <div className="cal-events">
-                      {cell.events.slice(0, 2).map((e) => (
-                        <span className="cal-chip" key={e.id} title={e.title}>
+                      {cell.events.slice(0, 3).map((e) => (
+                        <span
+                          className="cal-chip"
+                          key={e.id}
+                          title={e.title}
+                          style={{ backgroundColor: e.color, color: "#fff" }}
+                        >
                           {e.title}
                         </span>
                       ))}
 
-                      {cell.events.length > 2 && (
+                      {cell.events.length > 3 && (
                         <span className="cal-more">
-                          +{cell.events.length - 2}
+                          +{cell.events.length - 3}
                         </span>
                       )}
                     </div>
@@ -284,7 +303,12 @@ export default function CalendarPage() {
                 <div className="side-event-list">
                   {selectedEvents.map((e) => (
                     <div className="side-event" key={e.id}>
-                      <span className="side-badge">{getDday(e.date)}</span>
+                      <span
+                        className="side-badge"
+                        style={{ backgroundColor: e.color }}
+                      >
+                        {getDday(e.date)}
+                      </span>
                       <span className="side-title">{e.title}</span>
                       <button onClick={() => deleteEvent(e.id)}>✕</button>
                     </div>
@@ -302,6 +326,22 @@ export default function CalendarPage() {
                     if (e.key === "Enter") addEvent();
                   }}
                 />
+
+                <div className="color-picker">
+                  {COLOR_PALETTE.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={
+                        "color-dot" + (selectedColor === c ? " selected" : "")
+                      }
+                      style={{ backgroundColor: c }}
+                      onClick={() => setSelectedColor(c)}
+                      aria-label={`색상 ${c} 선택`}
+                    />
+                  ))}
+                </div>
+
                 <button onClick={addEvent}>추가</button>
               </div>
             </div>
@@ -324,7 +364,12 @@ export default function CalendarPage() {
                         setSelectedDate(e.date);
                       }}
                     >
-                      <span className="side-badge">{getDday(e.date)}</span>
+                      <span
+                        className="side-badge"
+                        style={{ backgroundColor: e.color }}
+                      >
+                        {getDday(e.date)}
+                      </span>
 
                       <span className="side-title">
                         {e.title}

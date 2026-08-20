@@ -278,16 +278,38 @@
 
 .side-add {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
 .side-add input {
   flex: 1;
-  min-width: 0;
+  min-width: 160px;
   padding: 11px 12px;
   border-radius: 10px;
   border: 1px solid #ddd;
   font-size: 14px;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-dot.selected {
+  border-color: #333;
+  transform: scale(1.15);
 }
 
 .side-add button {

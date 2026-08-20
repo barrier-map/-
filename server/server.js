@@ -134,9 +134,19 @@ async function initTables() {
       user_id INTEGER NOT NULL,
       title TEXT NOT NULL,
       date TEXT NOT NULL,
+      color TEXT DEFAULT '#4f46e5',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // 이미 calendar_events 표를 쓰고 있던 경우엔 color 칸만 새로 붙여줌
+  // (이미 있으면 오류가 나는데, 그건 정상이라 무시함)
+  try {
+    await db.execute(`ALTER TABLE calendar_events ADD COLUMN color TEXT DEFAULT '#4f46e5'`);
+    console.log("✅ calendar_events 표에 color 칸을 추가했습니다.");
+  } catch (err) {
+    // 이미 있으면 여기로 옴 → 그냥 넘어감
+  }
 
   // 캠스터디 채팅 기록 보관
   await db.execute(`
@@ -162,34 +172,58 @@ function getTodayKST() {
   return kstString; // 'sv-SE' 로케일은 YYYY-MM-DD 형식을 그대로 줌
 }
 
-// 캠스터디 방 접속 시 출석 기록 (하루에 한 번만 기록되도록 UNIQUE 제약 활용)
+// 캠스터디 방 접속 시 출석 기록 (하루에 한 번만 기록되도록 직접 확인 후 없을 때만 추가)
+// ON CONFLICT 구문에 기대지 않고 직접 조회 후 없으면 넣는 방식이라
+// 데이터베이스에 예전부터 있던 표(고유 제약이 빠진 표)에서도 안전하게 동작합니다.
 async function markAttendance(userId) {
   if (!userId) return;
 
   try {
-    await db.execute({
-      sql: "INSERT OR IGNORE INTO attendance (user_id, date, seconds) VALUES (?, ?, 0)",
-      args: [userId, getTodayKST()],
+    const today = getTodayKST();
+
+    const existing = await db.execute({
+      sql: "SELECT id FROM attendance WHERE user_id = ? AND date = ?",
+      args: [userId, today],
     });
+
+    if (existing.rows.length === 0) {
+      await db.execute({
+        sql: "INSERT INTO attendance (user_id, date, seconds) VALUES (?, ?, 0)",
+        args: [userId, today],
+      });
+    }
   } catch (err) {
     console.error("출석 기록 실패:", err);
   }
 }
 
 // 방에 머문 시간을 오늘 출석 기록에 더함
+// (ON CONFLICT 대신 직접 조회 → 있으면 더하고, 없으면 새로 만듦)
 async function addStudySeconds(userId, seconds) {
   if (!userId || !seconds || seconds <= 0) return;
 
   try {
-    await db.execute({
-      sql: `
-        INSERT INTO attendance (user_id, date, seconds)
-        VALUES (?, ?, ?)
-        ON CONFLICT(user_id, date)
-        DO UPDATE SET seconds = seconds + excluded.seconds
-      `,
-      args: [userId, getTodayKST(), seconds],
+    const today = getTodayKST();
+
+    const existing = await db.execute({
+      sql: "SELECT id, seconds FROM attendance WHERE user_id = ? AND date = ?",
+      args: [userId, today],
     });
+
+    if (existing.rows.length > 0) {
+      const row = existing.rows[0];
+      const newSeconds = Number(row.seconds || 0) + seconds;
+
+      await db.execute({
+        sql: "UPDATE attendance SET seconds = ? WHERE id = ?",
+        args: [newSeconds, row.id],
+      });
+    } else {
+      await db.execute({
+        sql: "INSERT INTO attendance (user_id, date, seconds) VALUES (?, ?, ?)",
+        args: [userId, today, seconds],
+      });
+    }
   } catch (err) {
     console.error("공부시간 기록 실패:", err);
   }
@@ -240,25 +274,8 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", ({ roomId, username, userId }) => {
 
-    const finalUsername = username || "익명";
-
-    // ==========================
-    // 닉네임 중복 방지
-    // 같은 방 안에 이미 똑같은 닉네임을 쓰는 "다른" 사람이 있으면 입장을 막음
-    // (같은 계정이 새로고침 등으로 다시 들어오는 경우는 예외로 허용)
-    // ==========================
-    const existingUsers = rooms[roomId] || [];
-    const nameTaken = existingUsers.some(
-      (p) => p.username === finalUsername && p.userId !== userId
-    );
-
-    if (nameTaken) {
-      socket.emit("join-rejected", { reason: "duplicate-username" });
-      return;
-    }
-
     socket.roomId = roomId;
-    socket.username = finalUsername;
+    socket.username = username || "익명";
     socket.userId = userId;
 
     // 출석 기록 (하루 1번만 기록됨, 실패해도 방 입장에는 영향 없음)

@@ -3,6 +3,23 @@ const db = require("../database/database");
 
 const router = express.Router();
 
+// 고를 수 있는 색상 목록 (이상한 값이 들어오는 걸 막기 위해 여기 있는 색만 허용함)
+const COLOR_PALETTE = [
+  "#4f46e5", // 보라
+  "#ef4444", // 빨강
+  "#f97316", // 주황
+  "#eab308", // 노랑
+  "#22c55e", // 초록
+  "#06b6d4", // 하늘
+  "#3b82f6", // 파랑
+  "#ec4899", // 분홍
+];
+
+function safeColor(color) {
+  return COLOR_PALETTE.includes(color) ? color : COLOR_PALETTE[0];
+}
+
+
 
 // ======================
 // 디데이 목록 불러오기
@@ -25,6 +42,7 @@ router.get("/:userId", async (req, res) => {
                 id: Number(row.id),
                 title: row.title,
                 date: row.date,
+                color: safeColor(row.color),
             })),
         });
 
@@ -46,7 +64,7 @@ router.get("/:userId", async (req, res) => {
 
 router.post("/", async (req, res) => {
 
-    const { userId, title, date } = req.body;
+    const { userId, title, date, color } = req.body;
 
     if (!userId || !title || !title.trim() || !date) {
         return res.json({
@@ -55,10 +73,12 @@ router.post("/", async (req, res) => {
         });
     }
 
+    const finalColor = safeColor(color);
+
     try {
         const result = await db.execute({
-            sql: "INSERT INTO calendar_events (user_id, title, date) VALUES (?, ?, ?)",
-            args: [userId, title.trim(), date],
+            sql: "INSERT INTO calendar_events (user_id, title, date, color) VALUES (?, ?, ?, ?)",
+            args: [userId, title.trim(), date, finalColor],
         });
 
         res.json({
@@ -67,6 +87,7 @@ router.post("/", async (req, res) => {
                 id: Number(result.lastInsertRowid),
                 title: title.trim(),
                 date,
+                color: finalColor,
             },
         });
 
